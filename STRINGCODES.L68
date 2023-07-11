@@ -1,0 +1,3121 @@
+00001000 Starting Address
+Assembler used: EASy68K Editor/Assembler v5.16.01
+Created On: 6/1/2023 6:50:43 PM
+
+00000000                             1  *-----------------------------------------------------------
+00000000                             2  * Title      : OPTCODES
+00000000                             3  * Written by :
+00000000                             4  * Date       :
+00000000                             5  * Description:
+00000000                             6  *-----------------------------------------------------------
+00000000                             7  
+00001000                             8  START:    ORG    $1000
+00001000                             9  
+00001000                            10  *Used registers:
+00001000                            11  *A4,A5,A6 = (counter, last opcode, curr opcode)
+00001000                            12  *$0 in memory is where the string inputs are temporarily stored
+00001000                            13  *-------------------------------------------*
+00001000                            14  *------------------MAIN---------------------*
+00001000                            15  *-------------------------------------------*
+00001000                            16  
+00001000  43F9 000031A6             17                 LEA      WELCOME,A1
+00001006  103C 000D                 18                 MOVE.B   #13,D0
+0000100A  4E4F                      19                 TRAP     #15 
+0000100C                            20  
+0000100C                            21  *---------Read and store --------------
+0000100C  43F9 000031E6             22  GETADDR1        LEA     ENTADDR1,A1
+00001012  103C 000E                 23                  MOVE.B  #14,D0
+00001016  4E4F                      24                  TRAP    #15
+00001018  43F8 0000                 25                  LEA     $0,A1
+0000101C  103C 0002                 26                  MOVE.B  #2, D0
+00001020  4E4F                      27                  TRAP    #15
+00001022  2C49                      28                  MOVE.L  A1,A6
+00001024                            29                  
+00001024  7800                      30                  MOVE.L   #0,D4 *wipe saved numbers here
+00001026  7600                      31                  MOVE.L   #0,D3
+00001028                            32                  
+00001028  B23C 0000                 33                  CMP.B   #0,D1
+0000102C  6700 0162                 34                  BEQ     INPUTERROR *address is zero chars long
+00001030  B23C 0008                 35                  CMP.B   #8,D1
+00001034  6E00 015A                 36                  BGT     INPUTERROR *address is too large
+00001038                            37  
+00001038                            38  *ASCII TO HEX CONVERTER TM                            
+00001038  E984                      39  ASCIILOOP1      ASL.L   #4,D4 *shift by one hex value (not byte)
+0000103A  4E71                      40                  NOP
+0000103C  D803                      41                  ADD.B   D3,D4 *add previous hex value to result
+0000103E  4E71                      42                  NOP
+00001040  1611                      43                  MOVE.B  (A1),D3 *get next ascii value
+00001042  4E71                      44                  NOP
+00001044  5289                      45                  ADD.L   #1,A1 *get next byte
+00001046  B23C 0000                 46                  CMP.B   #0,D1 *check if at end of string
+0000104A  6700 0034                 47                  BEQ     GETADDR2 *if so, conversion is complete
+0000104E  5301                      48                  SUB.B   #1,D1 *subtract size
+00001050                            49                  
+00001050                            50                  *check its hexadecimal equvialent
+00001050  B63C 0030                 51                  CMP.B   #$30,D3 *0 in ascii
+00001054  6D00 013A                 52                  BLT     INPUTERROR *invalid character
+00001058  B63C 003A                 53                  CMP.B   #$3A,D3 *: in ascii
+0000105C  6D00 0016                 54                  BLT     ASCIINUM1 *byte is 0-9
+00001060  B63C 0041                 55                  CMP.B   #$41,D3 *A in ascii
+00001064  6D00 012A                 56                  BLT     INPUTERROR *invalid character
+00001068  B63C 0047                 57                  CMP.B   #$47,D3 *G in ascii
+0000106C  6D00 000C                 58                  BLT     ASCIICHAR1 *byte is A-F
+00001070  6000 011E                 59                  BRA     INPUTERROR *invalid character
+00001074                            60  
+00001074  0403 0030                 61  ASCIINUM1       SUB.B   #$30,D3
+00001078  60BE                      62                  BRA     ASCIILOOP1
+0000107A                            63  
+0000107A  0403 0037                 64  ASCIICHAR1      SUB.B   #$37,D3
+0000107E  60B8                      65                  BRA     ASCIILOOP1
+00001080                            66  
+00001080  2C44                      67  GETADDR2        MOVE.L  D4,A6 *save lower bound; get ready for second
+00001082  4E71                      68                  NOP
+00001084  7800                      69                  MOVE.L  #0,D4 *wipe saved numbers here
+00001086  7600                      70                  MOVE.L  #0,D3             
+00001088                            71               
+00001088                            72  *---------Read and store --------------
+00001088  43F9 00003231             73                  LEA     ENTADDR2,A1
+0000108E  103C 000E                 74                  MOVE.B  #14,D0
+00001092  4E4F                      75                  TRAP    #15
+00001094  43F8 0000                 76                  LEA     $0,A1
+00001098  103C 0002                 77                  MOVE.B  #2, D0
+0000109C  4E4F                      78                  TRAP    #15
+0000109E  2A49                      79                  MOVE.L  A1,A5
+000010A0                            80  
+000010A0  B23C 0000                 81                  CMP.B   #0,D1
+000010A4  6700 00EA                 82                  BEQ     INPUTERROR *address is zero chars long    
+000010A8  B23C 0008                 83                  CMP.B   #8,D1
+000010AC  6E00 00E2                 84                  BGT     INPUTERROR *address is too large            
+000010B0                            85  
+000010B0                            86  *ASCII TO HEX CONVERTER TM  
+000010B0  E984                      87  ASCIILOOP2      ASL.L   #4,D4 *shift by one hex value (not byte)
+000010B2  4E71                      88                  NOP
+000010B4  D803                      89                  ADD.B   D3,D4 *add previous hex value to result
+000010B6  4E71                      90                  NOP
+000010B8  1611                      91                  MOVE.B  (A1),D3 *get next ascii value
+000010BA  4E71                      92                  NOP
+000010BC  5289                      93                  ADD.L   #1,A1 *get next byte
+000010BE  B23C 0000                 94                  CMP.B   #0,D1 *check if at end of string
+000010C2  6700 0034                 95                  BEQ     FINISHADDR2 *if so, conversion is complete
+000010C6  5301                      96                  SUB.B   #1,D1 *subtract size
+000010C8                            97                  
+000010C8                            98                  *check its hexadecimal equvialent
+000010C8  B63C 0030                 99                  CMP.B   #$30,D3 *0 in ascii
+000010CC  6D00 00C2                100                  BLT     INPUTERROR *invalid character
+000010D0  B63C 003A                101                  CMP.B   #$3A,D3 *: in ascii
+000010D4  6D00 0016                102                  BLT     ASCIINUM2 *byte is 0-9
+000010D8  B63C 0041                103                  CMP.B   #$41,D3 *A in ascii
+000010DC  6D00 00B2                104                  BLT     INPUTERROR *invalid character
+000010E0  B63C 0047                105                  CMP.B   #$47,D3 *G in ascii
+000010E4  6D00 000C                106                  BLT     ASCIICHAR2 *byte is A-F
+000010E8  6000 00A6                107                  BRA     INPUTERROR *invalid character                
+000010EC                           108  
+000010EC  0403 0030                109  ASCIINUM2       SUB.B   #$30,D3
+000010F0  60BE                     110                  BRA     ASCIILOOP2
+000010F2                           111  
+000010F2  0403 0037                112  ASCIICHAR2      SUB.B   #$37,D3
+000010F6  60B8                     113                  BRA     ASCIILOOP2    
+000010F8                           114  
+000010F8  2A44                     115  FINISHADDR2     MOVE.L  D4,A5
+000010FA                           116  
+000010FA                           117                  *error checking
+000010FA  BBCE                     118                  CMP.L   A6,A5
+000010FC  6D00 0092                119                  BLT     INPUTERROR *Destination < source
+00001100  BBF9 01000000            120                  CMP.L   $01000000,A5
+00001106  6E00 0088                121                  BGT     INPUTERROR *exceeds memory limit
+0000110A  BDF9 01000000            122                  CMP.L   $01000000,A6
+00001110  6E00 007E                123                  BGT     INPUTERROR *exceeds memory limit
+00001114                           124                  
+00001114  6100 202E                125                  BSR     FLUSH
+00001118  7800                     126                  MOVE.L  #0,D4 
+0000111A  387C 001F                127                  MOVE.W  #31,A4          
+0000111E                           128  
+0000111E                           129  *-------------------------------------------*
+0000111E                           130  *--------------OP CODES---------------------*
+0000111E                           131  *-------------------------------------------*
+0000111E                           132  
+0000111E  B8FC 0000                133  CONTINUE        CMP.W   #0,A4
+00001122  6700 2006                134                  BEQ     NEXTPAGE
+00001126  BBCE                     135                  CMP.L   A6,A5
+00001128  6D00 0030                136                  BLT     RESTART
+0000112C                           137                  
+0000112C                           138                  *print current address
+0000112C  43F9 0000317F            139                  LEA     DOLLAR,A1
+00001132  6100 1FEE                140                  BSR     PRINTSTR
+00001136  263C F0000000            141                  MOVE.L  #$F0000000,D3 *masking for zeroes
+0000113C  6100 2012                142                  BSR     PRINTZEROES
+00001140  220E                     143                  MOVE.L  A6,D1
+00001142  143C 0010                144                  MOVE.B  #16,D2
+00001146  103C 000F                145                  MOVE.B  #15,D0
+0000114A  4E4F                     146                  TRAP    #15
+0000114C  43F9 0000317A            147                  LEA     TB,A1
+00001152  6100 1FCE                148                  BSR     PRINTSTR            
+00001156                           149                  
+00001156  534C                     150                  SUB.W   #1,A4
+00001158  588E                     151                  ADD.L   #4,A6 *adds to address pointer. If you're already handling it just delete it
+0000115A                           152                  
+0000115A                           153  *-------------------------------------------*
+0000115A                           154  *------------INSERT CODE HERE---------------*
+0000115A                           155  *-------------------------------------------*                
+0000115A                           156                  
+0000115A                           157  
+0000115A                           158  RESTART         *copied from NEXTPAGE code
+0000115A  43F9 0000327C            159                  LEA      ENTPAGE,A1
+00001160  6100 1FC0                160                  BSR      PRINTSTR
+00001164  103C 0005                161                  MOVE.B   #5,D0 *get a char (in this case, enter key)
+00001168  4E4F                     162                  TRAP     #15
+0000116A  6100 1FD8                163                  BSR      FLUSH
+0000116E                           164                  
+0000116E                           165                  *ask user to restart
+0000116E  43F9 0000329A            166                  LEA      STARTAGAIN,A1 
+00001174  6100 1FAC                167                  BSR      PRINTSTR
+00001178  103C 0005                168                  MOVE.B   #5,D0 *get a char (y or n)
+0000117C  4E4F                     169                  TRAP     #15
+0000117E  6100 1F9C                170                  BSR      PRINTCRLF
+00001182  B23C 0079                171                  CMP.B    #$79,D1 *y ascii value
+00001186  6700 FE84                172                  BEQ      GETADDR1
+0000118A                           173                  
+0000118A  103C 0009                174                  MOVE.B  #9,D0 *end of line.
+0000118E  4E4F                     175                  TRAP    #15 
+00001190                           176  
+00001190  6100 1F8A                177  INPUTERROR      BSR     PRINTCRLF
+00001194  43F9 000032D6            178                  LEA     ERRMSG,A1
+0000119A  6100 1F86                179                  BSR     PRINTSTR
+0000119E  4EF8 100C                180                  JMP     GETADDR1
+000011A2                           181                 
+000011A2                           182  *-------------------------------------------*
+000011A2                           183  *----------------IF DATA--------------------*
+000011A2                           184  *-------------------------------------------*
+000011A2                           185  
+000011A2                           186  *---------------- TEMPLATE-------------*
+000011A2                           187  
+000011A2                           188  *ea src
+000011A2  43F9 000032D6            189  IFOPCODEEA      LEA     ERRMSG,A1
+000011A8  4EF9 000028EC            190                  JMP     EASRC 
+000011AE                           191  
+000011AE  43F9 000032D6            192  IFOPCODEEAXD    LEA     ERRMSG,A1
+000011B4  4EF9 0000294C            193                  JMP     EASRCD    
+000011BA                           194  
+000011BA  43F9 000032D6            195  IFOPCODEEAXAI   LEA     ERRMSG,A1
+000011C0  4EF9 000028F8            196                  JMP     EASRCAI
+000011C6                           197  
+000011C6  43F9 000032D6            198  IFOPCODEEAXPR   LEA     ERRMSG,A1
+000011CC  4EF9 00002914            199                  JMP     EASRCPR 
+000011D2                           200  
+000011D2  43F9 000032D6            201  IFOPCODEEAXPO   LEA     ERRMSG,A1
+000011D8  4EF9 00002930            202                  JMP     EASRCPO 
+000011DE                           203  
+000011DE                           204  *data reg dest
+000011DE  43F9 000032D6            205  IFOPCODEDXD     LEA     ERRMSG,A1
+000011E4  4EF9 0000295E            206                  JMP     DSRCDDEST                
+000011EA  43F9 000032D6            207  IFOPCODEAXD     LEA     ERRMSG,A1
+000011F0  4EF9 0000297E            208                  JMP     ASRCDDEST                
+000011F6  43F9 000032D6            209  IFOPCODEAIXD    LEA     ERRMSG,A1
+000011FC  4EF9 0000299E            210                  JMP     AISRCDDEST                
+00001202  43F9 000032D6            211  IFOPCODEIXD     LEA     ERRMSG,A1
+00001208  4EF9 000029C8            212                  JMP     ISRCDDEST  
+0000120E  43F9 000032D6            213  IFOPCODEAAXD    LEA     ERRMSG,A1
+00001214  4EF9 000029E8            214                  JMP     AASRCDDEST                
+0000121A  43F9 000032D6            215  IFOPCODEPRXD    LEA     ERRMSG,A1
+00001220  4EF9 00002A02            216                  JMP     PRSRCDDEST                
+00001226  43F9 000032D6            217  IFOPCODEPOXD    LEA     ERRMSG,A1
+0000122C  4EF9 00002A2C            218                  JMP     POSRCDDEST    
+00001232                           219  
+00001232                           220  *addr reg dest
+00001232  43F9 000032D6            221  IFOPCODEDXA     LEA     ERRMSG,A1
+00001238  4EF9 00002A56            222                  JMP     DSRCADEST           
+0000123E  43F9 000032D6            223  IFOPCODEAXA     LEA     ERRMSG,A1
+00001244  4EF9 00002A76            224                  JMP     ASRCADEST                
+0000124A  43F9 000032D6            225  IFOPCODEAIXA    LEA     ERRMSG,A1
+00001250  4EF9 00002A96            226                  JMP     AISRCADEST                
+00001256  43F9 000032D6            227  IFOPCODEIXA     LEA     ERRMSG,A1
+0000125C  4EF9 00002AC0            228                  JMP     ISRCADEST  
+00001262  43F9 000032D6            229  IFOPCODEAAXA    LEA     ERRMSG,A1
+00001268  4EF9 00002AE0            230                  JMP     AASRCADEST                
+0000126E  43F9 000032D6            231  IFOPCODEPRXA    LEA     ERRMSG,A1
+00001274  4EF9 00002AFA            232                  JMP     PRSRCADEST                
+0000127A  43F9 000032D6            233  IFOPCODEPOXA    LEA     ERRMSG,A1
+00001280  4EF9 00002B24            234                  JMP     POSRCADEST  
+00001286                           235  
+00001286                           236  *addr indr dest
+00001286  43F9 000032D6            237  IFOPCODEDXAI    LEA     ERRMSG,A1
+0000128C  4EF9 00002A56            238                  JMP     DSRCADEST                
+00001292  43F9 000032D6            239  IFOPCODEAXAI    LEA     ERRMSG,A1
+00001298  4EF9 00002A76            240                  JMP     ASRCADEST                
+0000129E  43F9 000032D6            241  IFOPCODEAIXAI   LEA     ERRMSG,A1
+000012A4  4EF9 00002A96            242                  JMP     AISRCADEST                
+000012AA  43F9 000032D6            243  IFOPCODEIXAI    LEA     ERRMSG,A1
+000012B0  4EF9 00002AC0            244                  JMP     ISRCADEST  
+000012B6  43F9 000032D6            245  IFOPCODEAAXAI   LEA     ERRMSG,A1
+000012BC  4EF9 00002AE0            246                  JMP     AASRCADEST               
+000012C2  43F9 000032D6            247  IFOPCODEPRXAI   LEA     ERRMSG,A1
+000012C8  4EF9 00002AFA            248                  JMP     PRSRCADEST                
+000012CE  43F9 000032D6            249  IFOPCODEPOXAI   LEA     ERRMSG,A1
+000012D4  4EF9 00002B24            250                  JMP     POSRCADEST  
+000012DA                           251  
+000012DA                           252  *abs addr dest
+000012DA  43F9 000032D6            253  IFOPCODEDXAA    LEA     ERRMSG,A1
+000012E0  4EF9 00002D8E            254                  JMP     DSRCAADEST                
+000012E6  43F9 000032D6            255  IFOPCODEAXAA    LEA     ERRMSG,A1
+000012EC  4EF9 00002DA8            256                  JMP     ASRCAADEST                
+000012F2  43F9 000032D6            257  IFOPCODEAIXAA   LEA     ERRMSG,A1
+000012F8  4EF9 00002DC2            258                  JMP     AISRCAADEST                
+000012FE  43F9 000032D6            259  IFOPCODEIXAA    LEA     ERRMSG,A1
+00001304  4EF9 00002DE6            260                  JMP     ISRCAADEST  
+0000130A  43F9 000032D6            261  IFOPCODEAAXAA   LEA     ERRMSG,A1
+00001310  4EF9 00002E00            262                  JMP     AASRCAADEST                
+00001316  43F9 000032D6            263  IFOPCODEPRXAA   LEA     ERRMSG,A1
+0000131C  4EF9 00002E14            264                  JMP     PRSRCAADEST                
+00001322  43F9 000032D6            265  IFOPCODEPOXAA   LEA     ERRMSG,A1
+00001328  4EF9 00002E38            266                  JMP     POSRCAADEST 
+0000132E                           267  
+0000132E                           268  *pre decr dest
+0000132E  43F9 000032D6            269  IFOPCODEDXPR    LEA     ERRMSG,A1
+00001334  4EF9 00002E5C            270                  JMP     DSRCPRDEST                
+0000133A  43F9 000032D6            271  IFOPCODEAXPR    LEA     ERRMSG,A1
+00001340  4EF9 00002E86            272                  JMP     ASRCPRDEST                
+00001346  43F9 000032D6            273  IFOPCODEAIXPR   LEA     ERRMSG,A1
+0000134C  4EF9 00002EB0            274                  JMP     AISRCPRDEST                
+00001352  43F9 000032D6            275  IFOPCODEIXPR    LEA     ERRMSG,A1
+00001358  4EF9 00002EE4            276                  JMP     ISRCPRDEST  
+0000135E  43F9 000032D6            277  IFOPCODEAAXPR   LEA     ERRMSG,A1
+00001364  4EF9 00002F0E            278                  JMP     AASRCPRDEST               
+0000136A  43F9 000032D6            279  IFOPCODEPRXPR   LEA     ERRMSG,A1
+00001370  4EF9 00002F32            280                  JMP     PRSRCPRDEST                
+00001376  43F9 000032D6            281  IFOPCODEPOXPR   LEA     ERRMSG,A1
+0000137C  4EF9 00002F66            282                  JMP     POSRCPRDEST    
+00001382                           283  
+00001382                           284  *post incr dest
+00001382  43F9 000032D6            285  IFOPCODEDXPO    LEA     ERRMSG,A1
+00001388  4EF9 00002F9A            286                  JMP     DSRCPODEST                
+0000138E  43F9 000032D6            287  IFOPCODEAXPO    LEA     ERRMSG,A1
+00001394  4EF9 00002FC4            288                  JMP     ASRCPODEST               
+0000139A  43F9 000032D6            289  IFOPCODEAIXPO   LEA     ERRMSG,A1
+000013A0  4EF9 00002FEE            290                  JMP     AISRCPODEST                
+000013A6  43F9 000032D6            291  IFOPCODEIXPO    LEA     ERRMSG,A1
+000013AC  4EF9 00003022            292                  JMP     ISRCPODEST  
+000013B2  43F9 000032D6            293  IFOPCODEAAXPO   LEA     ERRMSG,A1
+000013B8  4EF9 0000304C            294                  JMP     AASRCPODEST                
+000013BE  43F9 000032D6            295  IFOPCODEPRXPO   LEA     ERRMSG,A1
+000013C4  4EF9 00003070            296                  JMP     PRSRCPODEST                
+000013CA  43F9 000032D6            297  IFOPCODEPOXPO   LEA     ERRMSG,A1
+000013D0  4EF9 000030A4            298                  JMP     POSRCPODEST             
+000013D6                           299  
+000013D6                           300  *---------------- MOVE Variants-------------*
+000013D6                           301    
+000013D6                           302  **MOVE.B
+000013D6                           303                  
+000013D6                           304  *data reg dest
+000013D6  43F9 0000333F            305  IFMOVEBDXD      LEA     SMOVEB,A1
+000013DC  4EF9 0000295E            306                  JMP     DSRCDDEST                
+000013E2  43F9 0000333F            307  IFMOVEBAXD      LEA     SMOVEB,A1
+000013E8  4EF9 0000297E            308                  JMP     ASRCDDEST                
+000013EE  43F9 0000333F            309  IFMOVEBAIXD     LEA     SMOVEB,A1
+000013F4  4EF9 0000299E            310                  JMP     AISRCDDEST                
+000013FA  43F9 0000333F            311  IFMOVEBIXD      LEA     SMOVEB,A1
+00001400  4EF9 000029C8            312                  JMP     ISRCDDEST  
+00001406  43F9 0000333F            313  IFMOVEBAAXD     LEA     SMOVEB,A1
+0000140C  4EF9 000029E8            314                  JMP     AASRCDDEST                
+00001412  43F9 0000333F            315  IFMOVEBPRXD     LEA     SMOVEB,A1
+00001418  4EF9 00002A02            316                  JMP     PRSRCDDEST                
+0000141E  43F9 0000333F            317  IFMOVEBPOXD     LEA     SMOVEB,A1
+00001424  4EF9 00002A2C            318                  JMP     POSRCDDEST    
+0000142A                           319  
+0000142A                           320  *addr indr dest
+0000142A  43F9 0000333F            321  IFMOVEBDXAI    LEA     SMOVEB,A1
+00001430  4EF9 00002A56            322                  JMP     DSRCADEST                
+00001436  43F9 0000333F            323  IFMOVEBAXAI    LEA     SMOVEB,A1
+0000143C  4EF9 00002A76            324                  JMP     ASRCADEST                
+00001442  43F9 0000333F            325  IFMOVEBAIXAI   LEA     SMOVEB,A1
+00001448  4EF9 00002A96            326                  JMP     AISRCADEST                
+0000144E  43F9 0000333F            327  IFMOVEBIXAI    LEA     SMOVEB,A1
+00001454  4EF9 00002AC0            328                  JMP     ISRCADEST  
+0000145A  43F9 0000333F            329  IFMOVEBAAXAI   LEA     SMOVEB,A1
+00001460  4EF9 00002AE0            330                  JMP     AASRCADEST               
+00001466  43F9 0000333F            331  IFMOVEBPRXAI   LEA     SMOVEB,A1
+0000146C  4EF9 00002AFA            332                  JMP     PRSRCADEST                
+00001472  43F9 0000333F            333  IFMOVEBPOXAI   LEA     SMOVEB,A1
+00001478  4EF9 00002B24            334                  JMP     POSRCADEST 
+0000147E                           335  
+0000147E                           336  *abs addr dest
+0000147E  43F9 0000333F            337  IFMOVEBDXAA    LEA     SMOVEB,A1
+00001484  4EF9 00002D8E            338                  JMP     DSRCAADEST                
+0000148A  43F9 0000333F            339  IFMOVEBAXAA    LEA     SMOVEB,A1
+00001490  4EF9 00002DA8            340                  JMP     ASRCAADEST                
+00001496  43F9 0000333F            341  IFMOVEBAIXAA   LEA     SMOVEB,A1
+0000149C  4EF9 00002DC2            342                  JMP     AISRCAADEST                
+000014A2  43F9 0000333F            343  IFMOVEBIXAA    LEA     SMOVEB,A1
+000014A8  4EF9 00002DE6            344                  JMP     ISRCAADEST  
+000014AE  43F9 0000333F            345  IFMOVEBAAXAA   LEA     SMOVEB,A1
+000014B4  4EF9 00002E00            346                  JMP     AASRCAADEST                
+000014BA  43F9 0000333F            347  IFMOVEBPRXAA   LEA     SMOVEB,A1
+000014C0  4EF9 00002E14            348                  JMP     PRSRCAADEST                
+000014C6  43F9 0000333F            349  IFMOVEBPOXAA   LEA     SMOVEB,A1
+000014CC  4EF9 00002E38            350                  JMP     POSRCAADEST 
+000014D2                           351  
+000014D2                           352  *pre decr dest
+000014D2  43F9 0000333F            353  IFMOVEBDXPR    LEA     SMOVEB,A1
+000014D8  4EF9 00002E5C            354                  JMP     DSRCPRDEST                
+000014DE  43F9 0000333F            355  IFMOVEBAXPR    LEA     SMOVEB,A1
+000014E4  4EF9 00002E86            356                  JMP     ASRCPRDEST                
+000014EA  43F9 0000333F            357  IFMOVEBAIXPR   LEA     SMOVEB,A1
+000014F0  4EF9 00002EB0            358                  JMP     AISRCPRDEST                
+000014F6  43F9 0000333F            359  IFMOVEBIXPR    LEA     SMOVEB,A1
+000014FC  4EF9 00002EE4            360                  JMP     ISRCPRDEST  
+00001502  43F9 0000333F            361  IFMOVEBAAXPR   LEA     SMOVEB,A1
+00001508  4EF9 00002F0E            362                  JMP     AASRCPRDEST               
+0000150E  43F9 0000333F            363  IFMOVEBPRXPR   LEA     SMOVEB,A1
+00001514  4EF9 00002F32            364                  JMP     PRSRCPRDEST                
+0000151A  43F9 0000333F            365  IFMOVEBPOXPR   LEA     SMOVEB,A1
+00001520  4EF9 00002F66            366                  JMP     POSRCPRDEST    
+00001526                           367  
+00001526                           368  *post incr dest
+00001526  43F9 0000333F            369  IFMOVEBDXPO    LEA     SMOVEB,A1
+0000152C  4EF9 00002F9A            370                  JMP     DSRCPODEST                
+00001532  43F9 0000333F            371  IFMOVEBAXPO    LEA     SMOVEB,A1
+00001538  4EF9 00002FC4            372                  JMP     ASRCPODEST               
+0000153E  43F9 0000333F            373  IFMOVEBAIXPO   LEA     SMOVEB,A1
+00001544  4EF9 00002FEE            374                  JMP     AISRCPODEST                
+0000154A  43F9 0000333F            375  IFMOVEBIXPO    LEA     SMOVEB,A1
+00001550  4EF9 00003022            376                  JMP     ISRCPODEST  
+00001556  43F9 0000333F            377  IFMOVEBAAXPO   LEA     SMOVEB,A1
+0000155C  4EF9 0000304C            378                  JMP     AASRCPODEST                
+00001562  43F9 0000333F            379  IFMOVEBPRXPO   LEA     SMOVEB,A1
+00001568  4EF9 00003070            380                  JMP     PRSRCPODEST                
+0000156E  43F9 0000333F            381  IFMOVEBPOXPO   LEA     SMOVEB,A1
+00001574  4EF9 000030A4            382                  JMP     POSRCPODEST                 
+0000157A                           383                  
+0000157A                           384  **MOVE.W
+0000157A                           385                  
+0000157A                           386  *data reg dest
+0000157A  43F9 00003346            387  IFMOVEWDXD      LEA     SMOVEW,A1
+00001580  4EF9 0000295E            388                  JMP     DSRCDDEST                
+00001586  43F9 00003346            389  IFMOVEWAXD      LEA     SMOVEW,A1
+0000158C  4EF9 0000297E            390                  JMP     ASRCDDEST                
+00001592  43F9 00003346            391  IFMOVEWAIXD     LEA     SMOVEW,A1
+00001598  4EF9 0000299E            392                  JMP     AISRCDDEST                
+0000159E  43F9 00003346            393  IFMOVEWIXD      LEA     SMOVEW,A1
+000015A4  4EF9 000029C8            394                  JMP     ISRCDDEST  
+000015AA  43F9 00003346            395  IFMOVEWAAXD     LEA     SMOVEW,A1
+000015B0  4EF9 000029E8            396                  JMP     AASRCDDEST                
+000015B6  43F9 00003346            397  IFMOVEWPRXD     LEA     SMOVEW,A1
+000015BC  4EF9 00002A02            398                  JMP     PRSRCDDEST                
+000015C2  43F9 00003346            399  IFMOVEWPOXD     LEA     SMOVEW,A1
+000015C8  4EF9 00002A2C            400                  JMP     POSRCDDEST    
+000015CE                           401  
+000015CE                           402  *addr indr dest
+000015CE  43F9 00003346            403  IFMOVEWDXAI    LEA     SMOVEW,A1
+000015D4  4EF9 00002A56            404                  JMP     DSRCADEST                
+000015DA  43F9 00003346            405  IFMOVEWAXAI    LEA     SMOVEW,A1
+000015E0  4EF9 00002A76            406                  JMP     ASRCADEST                
+000015E6  43F9 00003346            407  IFMOVEWAIXAI   LEA     SMOVEW,A1
+000015EC  4EF9 00002A96            408                  JMP     AISRCADEST                
+000015F2  43F9 00003346            409  IFMOVEWIXAI    LEA     SMOVEW,A1
+000015F8  4EF9 00002AC0            410                  JMP     ISRCADEST  
+000015FE  43F9 00003346            411  IFMOVEWAAXAI   LEA     SMOVEW,A1
+00001604  4EF9 00002AE0            412                  JMP     AASRCADEST               
+0000160A  43F9 00003346            413  IFMOVEWPRXAI   LEA     SMOVEW,A1
+00001610  4EF9 00002AFA            414                  JMP     PRSRCADEST                
+00001616  43F9 00003346            415  IFMOVEWPOXAI   LEA     SMOVEW,A1
+0000161C  4EF9 00002B24            416                  JMP     POSRCADEST 
+00001622                           417  
+00001622                           418  *abs addr dest
+00001622  43F9 00003346            419  IFMOVEWDXAA    LEA     SMOVEW,A1
+00001628  4EF9 00002D8E            420                  JMP     DSRCAADEST                
+0000162E  43F9 00003346            421  IFMOVEWAXAA    LEA     SMOVEW,A1
+00001634  4EF9 00002DA8            422                  JMP     ASRCAADEST                
+0000163A  43F9 00003346            423  IFMOVEWAIXAA   LEA     SMOVEW,A1
+00001640  4EF9 00002DC2            424                  JMP     AISRCAADEST                
+00001646  43F9 00003346            425  IFMOVEWIXAA    LEA     SMOVEW,A1
+0000164C  4EF9 00002DE6            426                  JMP     ISRCAADEST  
+00001652  43F9 00003346            427  IFMOVEWAAXAA   LEA     SMOVEW,A1
+00001658  4EF9 00002E00            428                  JMP     AASRCAADEST                
+0000165E  43F9 00003346            429  IFMOVEWPRXAA   LEA     SMOVEW,A1
+00001664  4EF9 00002E14            430                  JMP     PRSRCAADEST                
+0000166A  43F9 00003346            431  IFMOVEWPOXAA   LEA     SMOVEW,A1
+00001670  4EF9 00002E38            432                  JMP     POSRCAADEST 
+00001676                           433  
+00001676                           434  *pre decr dest
+00001676  43F9 00003346            435  IFMOVEWDXPR    LEA     SMOVEW,A1
+0000167C  4EF9 00002E5C            436                  JMP     DSRCPRDEST                
+00001682  43F9 00003346            437  IFMOVEWAXPR    LEA     SMOVEW,A1
+00001688  4EF9 00002E86            438                  JMP     ASRCPRDEST                
+0000168E  43F9 00003346            439  IFMOVEWAIXPR   LEA     SMOVEW,A1
+00001694  4EF9 00002EB0            440                  JMP     AISRCPRDEST                
+0000169A  43F9 00003346            441  IFMOVEWIXPR    LEA     SMOVEW,A1
+000016A0  4EF9 00002EE4            442                  JMP     ISRCPRDEST  
+000016A6  43F9 00003346            443  IFMOVEWAAXPR   LEA     SMOVEW,A1
+000016AC  4EF9 00002F0E            444                  JMP     AASRCPRDEST               
+000016B2  43F9 00003346            445  IFMOVEWPRXPR   LEA     SMOVEW,A1
+000016B8  4EF9 00002F32            446                  JMP     PRSRCPRDEST                
+000016BE  43F9 00003346            447  IFMOVEWPOXPR   LEA     SMOVEW,A1
+000016C4  4EF9 00002F66            448                  JMP     POSRCPRDEST    
+000016CA                           449  
+000016CA                           450  *post incr dest
+000016CA  43F9 00003346            451  IFMOVEWDXPO    LEA     SMOVEW,A1
+000016D0  4EF9 00002F9A            452                  JMP     DSRCPODEST                
+000016D6  43F9 00003346            453  IFMOVEWAXPO    LEA     SMOVEW,A1
+000016DC  4EF9 00002FC4            454                  JMP     ASRCPODEST               
+000016E2  43F9 00003346            455  IFMOVEWAIXPO   LEA     SMOVEW,A1
+000016E8  4EF9 00002FEE            456                  JMP     AISRCPODEST                
+000016EE  43F9 00003346            457  IFMOVEWIXPO    LEA     SMOVEW,A1
+000016F4  4EF9 00003022            458                  JMP     ISRCPODEST  
+000016FA  43F9 00003346            459  IFMOVEWAAXPO   LEA     SMOVEW,A1
+00001700  4EF9 0000304C            460                  JMP     AASRCPODEST                
+00001706  43F9 00003346            461  IFMOVEWPRXPO   LEA     SMOVEW,A1
+0000170C  4EF9 00003070            462                  JMP     PRSRCPODEST                
+00001712  43F9 00003346            463  IFMOVEWPOXPO   LEA     SMOVEW,A1
+00001718  4EF9 000030A4            464                  JMP     POSRCPODEST 
+0000171E                           465  
+0000171E                           466  **MOVE.L
+0000171E                           467                  
+0000171E                           468  *data reg dest
+0000171E  43F9 0000334D            469  IFMOVELDXD      LEA     SMOVEL,A1
+00001724  4EF9 0000295E            470                  JMP     DSRCDDEST                
+0000172A  43F9 0000334D            471  IFMOVELAXD      LEA     SMOVEL,A1
+00001730  4EF9 0000297E            472                  JMP     ASRCDDEST                
+00001736  43F9 0000334D            473  IFMOVELAIXD     LEA     SMOVEL,A1
+0000173C  4EF9 0000299E            474                  JMP     AISRCDDEST                
+00001742  43F9 0000334D            475  IFMOVELIXD      LEA     SMOVEL,A1
+00001748  4EF9 000029C8            476                  JMP     ISRCDDEST  
+0000174E  43F9 0000334D            477  IFMOVELAAXD     LEA     SMOVEL,A1
+00001754  4EF9 000029E8            478                  JMP     AASRCDDEST                
+0000175A  43F9 0000334D            479  IFMOVELPRXD     LEA     SMOVEL,A1
+00001760  4EF9 00002A02            480                  JMP     PRSRCDDEST                
+00001766  43F9 0000334D            481  IFMOVELPOXD     LEA     SMOVEL,A1
+0000176C  4EF9 00002A2C            482                  JMP     POSRCDDEST    
+00001772                           483  
+00001772                           484  *addr indr dest
+00001772  43F9 0000334D            485  IFMOVELDXAI    LEA     SMOVEL,A1
+00001778  4EF9 00002A56            486                  JMP     DSRCADEST                
+0000177E  43F9 0000334D            487  IFMOVELAXAI    LEA     SMOVEL,A1
+00001784  4EF9 00002A76            488                  JMP     ASRCADEST                
+0000178A  43F9 0000334D            489  IFMOVELAIXAI   LEA     SMOVEL,A1
+00001790  4EF9 00002A96            490                  JMP     AISRCADEST                
+00001796  43F9 0000334D            491  IFMOVELIXAI    LEA     SMOVEL,A1
+0000179C  4EF9 00002AC0            492                  JMP     ISRCADEST  
+000017A2  43F9 0000334D            493  IFMOVELAAXAI   LEA     SMOVEL,A1
+000017A8  4EF9 00002AE0            494                  JMP     AASRCADEST               
+000017AE  43F9 0000334D            495  IFMOVELPRXAI   LEA     SMOVEL,A1
+000017B4  4EF9 00002AFA            496                  JMP     PRSRCADEST                
+000017BA  43F9 0000334D            497  IFMOVELPOXAI   LEA     SMOVEL,A1
+000017C0  4EF9 00002B24            498                  JMP     POSRCADEST 
+000017C6                           499  
+000017C6                           500  *abs addr dest
+000017C6  43F9 0000334D            501  IFMOVELDXAA    LEA     SMOVEL,A1
+000017CC  4EF9 00002D8E            502                  JMP     DSRCAADEST                
+000017D2  43F9 0000334D            503  IFMOVELAXAA    LEA     SMOVEL,A1
+000017D8  4EF9 00002DA8            504                  JMP     ASRCAADEST                
+000017DE  43F9 0000334D            505  IFMOVELAIXAA   LEA     SMOVEL,A1
+000017E4  4EF9 00002DC2            506                  JMP     AISRCAADEST                
+000017EA  43F9 0000334D            507  IFMOVELIXAA    LEA     SMOVEL,A1
+000017F0  4EF9 00002DE6            508                  JMP     ISRCAADEST  
+000017F6  43F9 0000334D            509  IFMOVELAAXAA   LEA     SMOVEL,A1
+000017FC  4EF9 00002E00            510                  JMP     AASRCAADEST                
+00001802  43F9 0000334D            511  IFMOVELPRXAA   LEA     SMOVEL,A1
+00001808  4EF9 00002E14            512                  JMP     PRSRCAADEST                
+0000180E  43F9 0000334D            513  IFMOVELPOXAA   LEA     SMOVEL,A1
+00001814  4EF9 00002E38            514                  JMP     POSRCAADEST 
+0000181A                           515  
+0000181A                           516  *pre decr dest
+0000181A  43F9 0000334D            517  IFMOVELDXPR    LEA     SMOVEL,A1
+00001820  4EF9 00002E5C            518                  JMP     DSRCPRDEST                
+00001826  43F9 0000334D            519  IFMOVELAXPR    LEA     SMOVEL,A1
+0000182C  4EF9 00002E86            520                  JMP     ASRCPRDEST                
+00001832  43F9 0000334D            521  IFMOVELAIXPR   LEA     SMOVEL,A1
+00001838  4EF9 00002EB0            522                  JMP     AISRCPRDEST                
+0000183E  43F9 0000334D            523  IFMOVELIXPR    LEA     SMOVEL,A1
+00001844  4EF9 00002EE4            524                  JMP     ISRCPRDEST  
+0000184A  43F9 0000334D            525  IFMOVELAAXPR   LEA     SMOVEL,A1
+00001850  4EF9 00002F0E            526                  JMP     AASRCPRDEST               
+00001856  43F9 0000334D            527  IFMOVELPRXPR   LEA     SMOVEL,A1
+0000185C  4EF9 00002F32            528                  JMP     PRSRCPRDEST                
+00001862  43F9 0000334D            529  IFMOVELPOXPR   LEA     SMOVEL,A1
+00001868  4EF9 00002F66            530                  JMP     POSRCPRDEST    
+0000186E                           531  
+0000186E                           532  *post incr dest
+0000186E  43F9 0000334D            533  IFMOVELDXPO    LEA     SMOVEL,A1
+00001874  4EF9 00002F9A            534                  JMP     DSRCPODEST                
+0000187A  43F9 0000334D            535  IFMOVELAXPO    LEA     SMOVEL,A1
+00001880  4EF9 00002FC4            536                  JMP     ASRCPODEST               
+00001886  43F9 0000334D            537  IFMOVELAIXPO   LEA     SMOVEL,A1
+0000188C  4EF9 00002FEE            538                  JMP     AISRCPODEST                
+00001892  43F9 0000334D            539  IFMOVELIXPO    LEA     SMOVEL,A1
+00001898  4EF9 00003022            540                  JMP     ISRCPODEST  
+0000189E  43F9 0000334D            541  IFMOVELAAXPO   LEA     SMOVEL,A1
+000018A4  4EF9 0000304C            542                  JMP     AASRCPODEST                
+000018AA  43F9 0000334D            543  IFMOVELPRXPO   LEA     SMOVEL,A1
+000018B0  4EF9 00003070            544                  JMP     PRSRCPODEST                
+000018B6  43F9 0000334D            545  IFMOVELPOXPO   LEA     SMOVEL,A1
+000018BC  4EF9 000030A4            546                  JMP     POSRCPODEST   
+000018C2                           547                 
+000018C2                           548  *---------------- NOP Variants-------------*                
+000018C2  43F9 0000333B            549  IFNOP           LEA     SNOP,A1
+000018C8  6100 1858                550                  BSR     PRINTSTR
+000018CC  4EF8 111E                551                  JMP     CONTINUE
+000018D0                           552  
+000018D0                           553  *---------------- MOVEA Variants-------------*
+000018D0                           554  **MOVEAW
+000018D0                           555  *addr reg dest
+000018D0  43F9 00003354            556  IFMOVEAWDXA     LEA     SMOVEAW,A1
+000018D6  4EF9 00002A56            557                  JMP     DSRCADEST           
+000018DC  43F9 00003354            558  IFMOVEAWAXA     LEA     SMOVEAW,A1
+000018E2  4EF9 00002A76            559                  JMP     ASRCADEST                
+000018E8  43F9 00003354            560  IFMOVEAWAIXA    LEA     SMOVEAW,A1
+000018EE  4EF9 00002A96            561                  JMP     AISRCADEST                
+000018F4  43F9 00003354            562  IFMOVEAWIXA     LEA     SMOVEAW,A1
+000018FA  4EF9 00002AC0            563                  JMP     ISRCADEST  
+00001900  43F9 00003354            564  IFMOVEAWAAXA    LEA     SMOVEAW,A1
+00001906  4EF9 00002AE0            565                  JMP     AASRCADEST                
+0000190C  43F9 00003354            566  IFMOVEAWPRXA    LEA     SMOVEAW,A1
+00001912  4EF9 00002AFA            567                  JMP     PRSRCADEST                
+00001918  43F9 00003354            568  IFMOVEAWPOXA    LEA     SMOVEAW,A1
+0000191E  4EF9 00002B24            569                  JMP     POSRCADEST 
+00001924                           570  
+00001924                           571  **MOVEAL
+00001924                           572  *addr reg dest
+00001924  43F9 0000335C            573  IFMOVEALDXA     LEA     SMOVEAL,A1
+0000192A  4EF9 00002A56            574                  JMP     DSRCADEST           
+00001930  43F9 0000335C            575  IFMOVEALAXA     LEA     SMOVEAL,A1
+00001936  4EF9 00002A76            576                  JMP     ASRCADEST                
+0000193C  43F9 0000335C            577  IFMOVEALAIXA    LEA     SMOVEAL,A1
+00001942  4EF9 00002A96            578                  JMP     AISRCADEST                
+00001948  43F9 0000335C            579  IFMOVEALIXA     LEA     SMOVEAL,A1
+0000194E  4EF9 00002AC0            580                  JMP     ISRCADEST  
+00001954  43F9 0000335C            581  IFMOVEALAAXA    LEA     SMOVEAL,A1
+0000195A  4EF9 00002AE0            582                  JMP     AASRCADEST                
+00001960  43F9 0000335C            583  IFMOVEALPRXA    LEA     SMOVEAL,A1
+00001966  4EF9 00002AFA            584                  JMP     PRSRCADEST                
+0000196C  43F9 0000335C            585  IFMOVEALPOXA    LEA     SMOVEAL,A1
+00001972  4EF9 00002B24            586                  JMP     POSRCADEST 
+00001978                           587  
+00001978                           588  *--------------MOVEQ VARIANTS----------------*
+00001978  43F9 00003364            589  IFMOVEQIXD      LEA     SMOVEQ,A1
+0000197E  4EF9 000029C8            590                  JMP     ISRCDDEST 
+00001984                           591  
+00001984                           592  *--------------ADD VARIANTS------------------*
+00001984                           593  **ADDB
+00001984                           594  *data reg dest
+00001984  43F9 0000336A            595  IFADDBDXD     LEA     SADDB,A1
+0000198A  4EF9 0000295E            596                  JMP     DSRCDDEST                              
+00001990  43F9 0000336A            597  IFADDBAIXD    LEA     SADDB,A1
+00001996  4EF9 0000299E            598                  JMP     AISRCDDEST                
+0000199C  43F9 0000336A            599  IFADDBIXD     LEA     SADDB,A1
+000019A2  4EF9 000029C8            600                  JMP     ISRCDDEST  
+000019A8  43F9 0000336A            601  IFADDBAAXD    LEA     SADDB,A1
+000019AE  4EF9 000029E8            602                  JMP     AASRCDDEST                
+000019B4  43F9 0000336A            603  IFADDBPRXD    LEA     SADDB,A1
+000019BA  4EF9 00002A02            604                  JMP     PRSRCDDEST                
+000019C0  43F9 0000336A            605  IFADDBPOXD    LEA     SADDB,A1
+000019C6  4EF9 00002A2C            606                  JMP     POSRCDDEST  
+000019CC                           607                  
+000019CC                           608  *addr indr dest
+000019CC  43F9 0000336A            609  IFADDBDXAI    LEA     SADDB,A1
+000019D2  4EF9 00002A56            610                  JMP     DSRCADEST                
+000019D8                           611  
+000019D8                           612  *abs addr dest
+000019D8  43F9 0000336A            613  IFADDBDXAA    LEA     SADDB,A1
+000019DE  4EF9 00002D8E            614                  JMP     DSRCAADEST                
+000019E4                           615  
+000019E4                           616  *pre decr dest
+000019E4  43F9 0000336A            617  IFADDBDXPR    LEA     SADDB,A1
+000019EA  4EF9 00002E5C            618                  JMP     DSRCPRDEST                  
+000019F0                           619  
+000019F0                           620  *post incr dest
+000019F0  43F9 0000336A            621  IFADDBDXPO    LEA     SADDB,A1
+000019F6  4EF9 00002F9A            622                  JMP     DSRCPODEST                                          
+000019FC                           623                  
+000019FC                           624  **ADDW
+000019FC                           625  *data reg dest
+000019FC  43F9 00003370            626  IFADDWDXD     LEA     SADDW,A1
+00001A02  4EF9 0000295E            627                  JMP     DSRCDDEST                
+00001A08  43F9 00003370            628  IFADDWAXD     LEA     SADDW,A1
+00001A0E  4EF9 0000297E            629                  JMP     ASRCDDEST                
+00001A14  43F9 00003370            630  IFADDWAIXD    LEA     SADDW,A1
+00001A1A  4EF9 0000299E            631                  JMP     AISRCDDEST                
+00001A20  43F9 00003370            632  IFADDWIXD     LEA     SADDW,A1
+00001A26  4EF9 000029C8            633                  JMP     ISRCDDEST  
+00001A2C  43F9 00003370            634  IFADDWAAXD    LEA     SADDW,A1
+00001A32  4EF9 000029E8            635                  JMP     AASRCDDEST                
+00001A38  43F9 00003370            636  IFADDWPRXD    LEA     SADDW,A1
+00001A3E  4EF9 00002A02            637                  JMP     PRSRCDDEST                
+00001A44  43F9 00003370            638  IFADDWPOXD    LEA     SADDW,A1
+00001A4A  4EF9 00002A2C            639                  JMP     POSRCDDEST  
+00001A50                           640                  
+00001A50                           641  *addr indr dest
+00001A50  43F9 00003370            642  IFADDWDXAI    LEA     SADDW,A1
+00001A56  4EF9 00002A56            643                  JMP     DSRCADEST                
+00001A5C                           644  
+00001A5C                           645  *abs addr dest
+00001A5C  43F9 00003370            646  IFADDWDXAA    LEA     SADDW,A1
+00001A62  4EF9 00002D8E            647                  JMP     DSRCAADEST                
+00001A68                           648  
+00001A68                           649  *pre decr dest
+00001A68  43F9 00003370            650  IFADDWDXPR    LEA     SADDW,A1
+00001A6E  4EF9 00002E5C            651                  JMP     DSRCPRDEST                  
+00001A74                           652  
+00001A74                           653  *post incr dest
+00001A74  43F9 00003370            654  IFADDWDXPO    LEA     SADDW,A1
+00001A7A  4EF9 00002F9A            655                  JMP     DSRCPODEST   
+00001A80                           656                  
+00001A80                           657  **ADDL          
+00001A80                           658  
+00001A80                           659  *data reg dest
+00001A80  43F9 00003376            660  IFADDLDXD     LEA     SADDL,A1
+00001A86  4EF9 0000295E            661                  JMP     DSRCDDEST                
+00001A8C  43F9 00003376            662  IFADDLAXD     LEA     SADDL,A1
+00001A92  4EF9 0000297E            663                  JMP     ASRCDDEST                
+00001A98  43F9 00003376            664  IFADDLAIXD    LEA     SADDL,A1
+00001A9E  4EF9 0000299E            665                  JMP     AISRCDDEST                
+00001AA4  43F9 00003376            666  IFADDLIXD     LEA     SADDL,A1
+00001AAA  4EF9 000029C8            667                  JMP     ISRCDDEST  
+00001AB0  43F9 00003376            668  IFADDLAAXD    LEA     SADDL,A1
+00001AB6  4EF9 000029E8            669                  JMP     AASRCDDEST                
+00001ABC  43F9 00003376            670  IFADDLPRXD    LEA     SADDL,A1
+00001AC2  4EF9 00002A02            671                  JMP     PRSRCDDEST                
+00001AC8  43F9 00003376            672  IFADDLPOXD    LEA     SADDL,A1
+00001ACE  4EF9 00002A2C            673                  JMP     POSRCDDEST  
+00001AD4                           674                  
+00001AD4                           675  *addr indr dest
+00001AD4  43F9 00003376            676  IFADDLDXAI    LEA     SADDL,A1
+00001ADA  4EF9 00002A56            677                  JMP     DSRCADEST                
+00001AE0                           678  
+00001AE0                           679  *abs addr dest
+00001AE0  43F9 00003376            680  IFADDLDXAA    LEA     SADDL,A1
+00001AE6  4EF9 00002D8E            681                  JMP     DSRCAADEST                
+00001AEC                           682  
+00001AEC                           683  *pre decr dest
+00001AEC  43F9 00003376            684  IFADDLDXPR    LEA     SADDL,A1
+00001AF2  4EF9 00002E5C            685                  JMP     DSRCPRDEST                  
+00001AF8                           686  
+00001AF8                           687  *post incr dest
+00001AF8  43F9 00003376            688  IFADDLDXPO    LEA     SADDL,A1
+00001AFE  4EF9 00002F9A            689                  JMP     DSRCPODEST         
+00001B04                           690  
+00001B04                           691  *--------------ADDA VARIANTS-----------------*
+00001B04                           692  **ADDAW
+00001B04                           693  *addr reg dest
+00001B04  43F9 0000337C            694  IFADDAWDXA     LEA     SADDAW,A1
+00001B0A  4EF9 00002A56            695                  JMP     DSRCADEST           
+00001B10  43F9 0000337C            696  IFADDAWAXA     LEA     SADDAW,A1
+00001B16  4EF9 00002A76            697                  JMP     ASRCADEST                
+00001B1C  43F9 0000337C            698  IFADDAWAIXA    LEA     SADDAW,A1
+00001B22  4EF9 00002A96            699                  JMP     AISRCADEST                
+00001B28  43F9 0000337C            700  IFADDAWIXA     LEA     SADDAW,A1
+00001B2E  4EF9 00002AC0            701                  JMP     ISRCADEST  
+00001B34  43F9 0000337C            702  IFADDAWAAXA    LEA     SADDAW,A1
+00001B3A  4EF9 00002AE0            703                  JMP     AASRCADEST                
+00001B40  43F9 0000337C            704  IFADDAWPRXA    LEA     SADDAW,A1
+00001B46  4EF9 00002AFA            705                  JMP     PRSRCADEST                
+00001B4C  43F9 0000337C            706  IFADDAWPOXA    LEA     SADDAW,A1
+00001B52  4EF9 00002B24            707                  JMP     POSRCADEST 
+00001B58                           708  
+00001B58                           709  **ADDAL
+00001B58                           710  
+00001B58                           711  *addr reg dest
+00001B58  43F9 00003383            712  IFADDALDXA     LEA     SADDAL,A1
+00001B5E  4EF9 00002A56            713                  JMP     DSRCADEST           
+00001B64  43F9 00003383            714  IFADDALAXA     LEA     SADDAL,A1
+00001B6A  4EF9 00002A76            715                  JMP     ASRCADEST                
+00001B70  43F9 00003383            716  IFADDALAIXA    LEA     SADDAL,A1
+00001B76  4EF9 00002A96            717                  JMP     AISRCADEST                
+00001B7C  43F9 00003383            718  IFADDALIXA     LEA     SADDAL,A1
+00001B82  4EF9 00002AC0            719                  JMP     ISRCADEST  
+00001B88  43F9 00003383            720  IFADDALAAXA    LEA     SADDAL,A1
+00001B8E  4EF9 00002AE0            721                  JMP     AASRCADEST                
+00001B94  43F9 00003383            722  IFADDALPRXA    LEA     SADDAL,A1
+00001B9A  4EF9 00002AFA            723                  JMP     PRSRCADEST                
+00001BA0  43F9 00003383            724  IFADDALPOXA    LEA     SADDAL,A1
+00001BA6  4EF9 00002B24            725                  JMP     POSRCADEST 
+00001BAC                           726  
+00001BAC                           727  *--------------ADDQ VARIANTS-----------------*
+00001BAC                           728  **ADDQB
+00001BAC                           729  *data reg dest             
+00001BAC  43F9 0000338A            730  IFADDQBIXD     LEA     SADDQB,A1
+00001BB2  4EF9 000029C8            731                  JMP     ISRCDDEST   
+00001BB8                           732  
+00001BB8                           733  *addr reg dest               
+00001BB8  43F9 0000338A            734  IFADDQBIXA     LEA     SADDQB,A1
+00001BBE  4EF9 00002AC0            735                  JMP     ISRCADEST  
+00001BC4                           736  
+00001BC4                           737  *addr indr dest             
+00001BC4  43F9 0000338A            738  IFADDQBIXAI    LEA     SADDQB,A1
+00001BCA  4EF9 00002AC0            739                  JMP     ISRCADEST  
+00001BD0                           740  
+00001BD0                           741  *abs addr dest             
+00001BD0  43F9 0000338A            742  IFADDQBIXAA    LEA     SADDQB,A1
+00001BD6  4EF9 00002DE6            743                  JMP     ISRCAADEST  
+00001BDC                           744  
+00001BDC                           745  *pre decr dest                
+00001BDC  43F9 0000338A            746  IFADDQBIXPR    LEA     SADDQB,A1
+00001BE2  4EF9 00002EE4            747                  JMP     ISRCPRDEST   
+00001BE8                           748  
+00001BE8                           749  *post incr dest            
+00001BE8  43F9 0000338A            750  IFADDQBIXPO    LEA     SADDQB,A1
+00001BEE  4EF9 00003022            751                  JMP     ISRCPODEST  
+00001BF4                           752  
+00001BF4                           753  **ADDQW
+00001BF4                           754  *data reg dest 
+00001BF4  43F9 00003391            755  IFADDQWIXD     LEA     SADDQW,A1
+00001BFA  4EF9 000029C8            756                  JMP     ISRCDDEST   
+00001C00                           757  
+00001C00                           758  *addr reg dest               
+00001C00  43F9 00003391            759  IFADDQWIXA     LEA     SADDQW,A1
+00001C06  4EF9 00002AC0            760                  JMP     ISRCADEST  
+00001C0C                           761  
+00001C0C                           762  *addr indr dest             
+00001C0C  43F9 00003391            763  IFADDQWIXAI    LEA     SADDQW,A1
+00001C12  4EF9 00002AC0            764                  JMP     ISRCADEST  
+00001C18                           765  
+00001C18                           766  *abs addr dest             
+00001C18  43F9 00003391            767  IFADDQWIXAA    LEA     SADDQW,A1
+00001C1E  4EF9 00002DE6            768                  JMP     ISRCAADEST  
+00001C24                           769  
+00001C24                           770  *pre decr dest                
+00001C24  43F9 00003391            771  IFADDQWIXPR    LEA     SADDQW,A1
+00001C2A  4EF9 00002EE4            772                  JMP     ISRCPRDEST   
+00001C30                           773  
+00001C30                           774  *post incr dest            
+00001C30  43F9 00003391            775  IFADDQWIXPO    LEA     SADDQW,A1
+00001C36  4EF9 00003022            776                  JMP     ISRCPODEST 
+00001C3C                           777  
+00001C3C                           778  **ADDQL
+00001C3C                           779  *data reg dest 
+00001C3C  43F9 00003398            780  IFADDQLIXD     LEA     SADDQL,A1
+00001C42  4EF9 000029C8            781                  JMP     ISRCDDEST   
+00001C48                           782  
+00001C48                           783  *addr reg dest               
+00001C48  43F9 00003398            784  IFADDQLIXA     LEA     SADDQL,A1
+00001C4E  4EF9 00002AC0            785                  JMP     ISRCADEST  
+00001C54                           786                  
+00001C54                           787  *addr indr dest             
+00001C54  43F9 00003398            788  IFADDQLIXAI    LEA     SADDQL,A1
+00001C5A  4EF9 00002AC0            789                  JMP     ISRCADEST  
+00001C60                           790  
+00001C60                           791  *abs addr dest             
+00001C60  43F9 00003398            792  IFADDQLIXAA    LEA     SADDQL,A1
+00001C66  4EF9 00002DE6            793                  JMP     ISRCAADEST  
+00001C6C                           794  
+00001C6C                           795  *pre decr dest                
+00001C6C  43F9 00003398            796  IFADDQLIXPR    LEA     SADDQL,A1
+00001C72  4EF9 00002EE4            797                  JMP     ISRCPRDEST   
+00001C78                           798  
+00001C78                           799  *post incr dest            
+00001C78  43F9 00003398            800  IFADDQLIXPO    LEA     SADDQL,A1
+00001C7E  4EF9 00003022            801                  JMP     ISRCPODEST  
+00001C84                           802  
+00001C84                           803  *--------------------SUB VARIANTS------------*
+00001C84                           804  **SUBB
+00001C84                           805  *data reg dest
+00001C84  43F9 0000339F            806  IFSUBBDXD     LEA     SSUBB,A1
+00001C8A  4EF9 0000295E            807                  JMP     DSRCDDEST                              
+00001C90  43F9 0000339F            808  IFSUBBAIXD    LEA     SSUBB,A1
+00001C96  4EF9 0000299E            809                  JMP     AISRCDDEST                
+00001C9C  43F9 0000339F            810  IFSUBBIXD     LEA     SSUBB,A1
+00001CA2  4EF9 000029C8            811                  JMP     ISRCDDEST  
+00001CA8  43F9 0000339F            812  IFSUBBAAXD    LEA     SSUBB,A1
+00001CAE  4EF9 000029E8            813                  JMP     AASRCDDEST                
+00001CB4  43F9 0000339F            814  IFSUBBPRXD    LEA     SSUBB,A1
+00001CBA  4EF9 00002A02            815                  JMP     PRSRCDDEST                
+00001CC0  43F9 0000339F            816  IFSUBBPOXD    LEA     SSUBB,A1
+00001CC6  4EF9 00002A2C            817                  JMP     POSRCDDEST  
+00001CCC                           818                  
+00001CCC                           819  *addr indr dest
+00001CCC  43F9 0000339F            820  IFSUBBDXAI    LEA     SSUBB,A1
+00001CD2  4EF9 00002A56            821                  JMP     DSRCADEST                
+00001CD8                           822  
+00001CD8                           823  *abs addr dest
+00001CD8  43F9 0000339F            824  IFSUBBDXAA    LEA     SSUBB,A1
+00001CDE  4EF9 00002D8E            825                  JMP     DSRCAADEST                
+00001CE4                           826  
+00001CE4                           827  *pre decr dest
+00001CE4  43F9 0000339F            828  IFSUBBDXPR    LEA     SSUBB,A1
+00001CEA  4EF9 00002E5C            829                  JMP     DSRCPRDEST                  
+00001CF0                           830  
+00001CF0                           831  *post incr dest
+00001CF0  43F9 0000339F            832  IFSUBBDXPO    LEA     SSUBB,A1
+00001CF6  4EF9 00002F9A            833                  JMP     DSRCPODEST                                          
+00001CFC                           834                  
+00001CFC                           835  **SUBW
+00001CFC                           836  *data reg dest
+00001CFC  43F9 000033A5            837  IFSUBWDXD     LEA     SSUBW,A1
+00001D02  4EF9 0000295E            838                  JMP     DSRCDDEST                
+00001D08  43F9 000033A5            839  IFSUBWAXD     LEA     SSUBW,A1
+00001D0E  4EF9 0000297E            840                  JMP     ASRCDDEST                
+00001D14  43F9 000033A5            841  IFSUBWAIXD    LEA     SSUBW,A1
+00001D1A  4EF9 0000299E            842                  JMP     AISRCDDEST                
+00001D20  43F9 000033A5            843  IFSUBWIXD     LEA     SSUBW,A1
+00001D26  4EF9 000029C8            844                  JMP     ISRCDDEST  
+00001D2C  43F9 000033A5            845  IFSUBWAAXD    LEA     SSUBW,A1
+00001D32  4EF9 000029E8            846                  JMP     AASRCDDEST                
+00001D38  43F9 000033A5            847  IFSUBWPRXD    LEA     SSUBW,A1
+00001D3E  4EF9 00002A02            848                  JMP     PRSRCDDEST                
+00001D44  43F9 000033A5            849  IFSUBWPOXD    LEA     SSUBW,A1
+00001D4A  4EF9 00002A2C            850                  JMP     POSRCDDEST  
+00001D50                           851                  
+00001D50                           852  *addr indr dest
+00001D50  43F9 000033A5            853  IFSUBWDXAI    LEA     SSUBW,A1
+00001D56  4EF9 00002A56            854                  JMP     DSRCADEST                
+00001D5C                           855  
+00001D5C                           856  *abs addr dest
+00001D5C  43F9 000033A5            857  IFSUBWDXAA    LEA     SSUBW,A1
+00001D62  4EF9 00002D8E            858                  JMP     DSRCAADEST                
+00001D68                           859  
+00001D68                           860  *pre decr dest
+00001D68  43F9 000033A5            861  IFSUBWDXPR    LEA     SSUBW,A1
+00001D6E  4EF9 00002E5C            862                  JMP     DSRCPRDEST                  
+00001D74                           863  
+00001D74                           864  *post incr dest
+00001D74  43F9 000033A5            865  IFSUBWDXPO    LEA     SSUBW,A1
+00001D7A  4EF9 00002F9A            866                  JMP     DSRCPODEST   
+00001D80                           867                  
+00001D80                           868  **SUBL          
+00001D80                           869  
+00001D80                           870  *data reg dest
+00001D80  43F9 000033AB            871  IFSUBLDXD     LEA     SSUBL,A1
+00001D86  4EF9 0000295E            872                  JMP     DSRCDDEST                
+00001D8C  43F9 000033AB            873  IFSUBLAXD     LEA     SSUBL,A1
+00001D92  4EF9 0000297E            874                  JMP     ASRCDDEST                
+00001D98  43F9 000033AB            875  IFSUBLAIXD    LEA     SSUBL,A1
+00001D9E  4EF9 0000299E            876                  JMP     AISRCDDEST                
+00001DA4  43F9 000033AB            877  IFSUBLIXD     LEA     SSUBL,A1
+00001DAA  4EF9 000029C8            878                  JMP     ISRCDDEST  
+00001DB0  43F9 000033AB            879  IFSUBLAAXD    LEA     SSUBL,A1
+00001DB6  4EF9 000029E8            880                  JMP     AASRCDDEST                
+00001DBC  43F9 000033AB            881  IFSUBLPRXD    LEA     SSUBL,A1
+00001DC2  4EF9 00002A02            882                  JMP     PRSRCDDEST                
+00001DC8  43F9 000033AB            883  IFSUBLPOXD    LEA     SSUBL,A1
+00001DCE  4EF9 00002A2C            884                  JMP     POSRCDDEST  
+00001DD4                           885                  
+00001DD4                           886  *addr indr dest
+00001DD4  43F9 000033AB            887  IFSUBLDXAI    LEA     SSUBL,A1
+00001DDA  4EF9 00002A56            888                  JMP     DSRCADEST                
+00001DE0                           889  
+00001DE0                           890  *abs addr dest
+00001DE0  43F9 000033AB            891  IFSUBLDXAA    LEA     SSUBL,A1
+00001DE6  4EF9 00002D8E            892                  JMP     DSRCAADEST                
+00001DEC                           893  
+00001DEC                           894  *pre decr dest
+00001DEC  43F9 000033AB            895  IFSUBLDXPR    LEA     SSUBL,A1
+00001DF2  4EF9 00002E5C            896                  JMP     DSRCPRDEST                  
+00001DF8                           897  
+00001DF8                           898  *post incr dest
+00001DF8  43F9 000033AB            899  IFSUBLDXPO    LEA     SSUBL,A1
+00001DFE  4EF9 00002F9A            900                  JMP     DSRCPODEST 
+00001E04                           901  
+00001E04                           902  *---------------- LEA Variants-------------*
+00001E04                           903  *addr indr dest                          
+00001E04  43F9 000033B1            904  IFLEAAIXAI      LEA     SLEA,A1
+00001E0A  4EF9 00002A96            905                  JMP     AISRCADEST                 
+00001E10  43F9 000033B1            906  IFLEAAAXAI      LEA     SLEA,A1
+00001E16  4EF9 00002AE0            907                  JMP     AASRCADEST               
+00001E1C                           908  
+00001E1C                           909  *---------------- NOT Variants-------------*
+00001E1C                           910  **NOT.B
+00001E1C                           911  *effective addresses
+00001E1C  43F9 000033B5            912  IFNOTBEA         LEA     SNOTB,A1
+00001E22  4EF9 000028EC            913                  JMP     EASRC 
+00001E28                           914  
+00001E28  43F9 000033B5            915  IFNOTBEAXD       LEA     SNOTB,A1
+00001E2E  4EF9 0000294C            916                  JMP     EASRCD    
+00001E34                           917  
+00001E34  43F9 000033B5            918  IFNOTBEAXAI      LEA     SNOTB,A1
+00001E3A  4EF9 000028F8            919                  JMP     EASRCAI
+00001E40                           920  
+00001E40  43F9 000033B5            921  IFNOTBEAXPR      LEA     SNOTB,A1
+00001E46  4EF9 00002914            922                  JMP     EASRCPR 
+00001E4C                           923  
+00001E4C  43F9 000033B5            924  IFNOTBEAXPO      LEA     SNOTB,A1
+00001E52  4EF9 00002930            925                  JMP     EASRCPO 
+00001E58                           926                  
+00001E58                           927  **NOT.W
+00001E58                           928  *effective addresses
+00001E58  43F9 000033BB            929  IFNOTWEA         LEA     SNOTW,A1
+00001E5E  4EF9 000028EC            930                  JMP     EASRC 
+00001E64                           931  
+00001E64  43F9 000033BB            932  IFNOTWEAXD       LEA     SNOTW,A1
+00001E6A  4EF9 0000294C            933                  JMP     EASRCD    
+00001E70                           934  
+00001E70  43F9 000033BB            935  IFNOTWEAXAI      LEA     SNOTW,A1
+00001E76  4EF9 000028F8            936                  JMP     EASRCAI
+00001E7C                           937  
+00001E7C  43F9 000033BB            938  IFNOTWEAXPR      LEA     SNOTW,A1
+00001E82  4EF9 00002914            939                  JMP     EASRCPR 
+00001E88                           940  
+00001E88  43F9 000033BB            941  IFNOTWEAXPO      LEA     SNOTW,A1
+00001E8E  4EF9 00002930            942                  JMP     EASRCPO 
+00001E94                           943  
+00001E94                           944  **NOT.L
+00001E94                           945  *effective addresses
+00001E94  43F9 000033C1            946  IFNOTLEA         LEA     SNOTL,A1
+00001E9A  4EF9 000028EC            947                  JMP     EASRC 
+00001EA0                           948  
+00001EA0  43F9 000033C1            949  IFNOTLEAXD       LEA     SNOTL,A1
+00001EA6  4EF9 0000294C            950                  JMP     EASRCD    
+00001EAC                           951  
+00001EAC  43F9 000033C1            952  IFNOTLEAXAI      LEA     SNOTL,A1
+00001EB2  4EF9 000028F8            953                  JMP     EASRCAI
+00001EB8                           954  
+00001EB8  43F9 000033C1            955  IFNOTLEAXPR      LEA     SNOTL,A1
+00001EBE  4EF9 00002914            956                  JMP     EASRCPR 
+00001EC4                           957  
+00001EC4  43F9 000033C1            958  IFNOTLEAXPO      LEA     SNOTL,A1
+00001ECA  4EF9 00002930            959                  JMP     EASRCPO                 
+00001ED0                           960  
+00001ED0                           961  *---------------- AND Variants-------------*
+00001ED0                           962  **ANDB
+00001ED0                           963  *data reg dest
+00001ED0  43F9 000033C7            964  IFANDBDXD     LEA     SANDB,A1
+00001ED6  4EF9 0000295E            965                  JMP     DSRCDDEST                              
+00001EDC  43F9 000033C7            966  IFANDBAIXD    LEA     SANDB,A1
+00001EE2  4EF9 0000299E            967                  JMP     AISRCDDEST                
+00001EE8  43F9 000033C7            968  IFANDBIXD     LEA     SANDB,A1
+00001EEE  4EF9 000029C8            969                  JMP     ISRCDDEST  
+00001EF4  43F9 000033C7            970  IFANDBAAXD    LEA     SANDB,A1
+00001EFA  4EF9 000029E8            971                  JMP     AASRCDDEST                
+00001F00  43F9 000033C7            972  IFANDBPRXD    LEA     SANDB,A1
+00001F06  4EF9 00002A02            973                  JMP     PRSRCDDEST                
+00001F0C  43F9 000033C7            974  IFANDBPOXD    LEA     SANDB,A1
+00001F12  4EF9 00002A2C            975                  JMP     POSRCDDEST  
+00001F18                           976                  
+00001F18                           977  *addr indr dest
+00001F18  43F9 000033C7            978  IFANDBDXAI    LEA     SANDB,A1
+00001F1E  4EF9 00002A56            979                  JMP     DSRCADEST                
+00001F24                           980  
+00001F24                           981  *abs addr dest
+00001F24  43F9 000033C7            982  IFANDBDXAA    LEA     SANDB,A1
+00001F2A  4EF9 00002D8E            983                  JMP     DSRCAADEST                
+00001F30                           984  
+00001F30                           985  *pre decr dest
+00001F30  43F9 000033C7            986  IFANDBDXPR    LEA     SANDB,A1
+00001F36  4EF9 00002E5C            987                  JMP     DSRCPRDEST                  
+00001F3C                           988  
+00001F3C                           989  *post incr dest
+00001F3C  43F9 000033C7            990  IFANDBDXPO    LEA     SANDB,A1
+00001F42  4EF9 00002F9A            991                  JMP     DSRCPODEST                                          
+00001F48                           992                  
+00001F48                           993  **ANDW
+00001F48                           994  *data reg dest
+00001F48  43F9 000033CD            995  IFANDWDXD     LEA     SANDW,A1
+00001F4E  4EF9 0000295E            996                  JMP     DSRCDDEST                              
+00001F54  43F9 000033CD            997  IFANDWAIXD    LEA     SANDW,A1
+00001F5A  4EF9 0000299E            998                  JMP     AISRCDDEST                
+00001F60  43F9 000033CD            999  IFANDWIXD     LEA     SANDW,A1
+00001F66  4EF9 000029C8           1000                  JMP     ISRCDDEST  
+00001F6C  43F9 000033CD           1001  IFANDWAAXD    LEA     SANDW,A1
+00001F72  4EF9 000029E8           1002                  JMP     AASRCDDEST                
+00001F78  43F9 000033CD           1003  IFANDWPRXD    LEA     SANDW,A1
+00001F7E  4EF9 00002A02           1004                  JMP     PRSRCDDEST                
+00001F84  43F9 000033CD           1005  IFANDWPOXD    LEA     SANDW,A1
+00001F8A  4EF9 00002A2C           1006                  JMP     POSRCDDEST  
+00001F90                          1007                  
+00001F90                          1008  *addr indr dest
+00001F90  43F9 000033CD           1009  IFANDWDXAI    LEA     SANDW,A1
+00001F96  4EF9 00002A56           1010                  JMP     DSRCADEST                
+00001F9C                          1011  
+00001F9C                          1012  *abs addr dest
+00001F9C  43F9 000033CD           1013  IFANDWDXAA    LEA     SANDW,A1
+00001FA2  4EF9 00002D8E           1014                  JMP     DSRCAADEST                
+00001FA8                          1015  
+00001FA8                          1016  *pre decr dest
+00001FA8  43F9 000033CD           1017  IFANDWDXPR    LEA     SANDW,A1
+00001FAE  4EF9 00002E5C           1018                  JMP     DSRCPRDEST                  
+00001FB4                          1019  
+00001FB4                          1020  *post incr dest
+00001FB4  43F9 000033CD           1021  IFANDWDXPO    LEA     SANDW,A1
+00001FBA  4EF9 00002F9A           1022                  JMP     DSRCPODEST   
+00001FC0                          1023                  
+00001FC0                          1024  **ORL          
+00001FC0                          1025  
+00001FC0                          1026  *data reg dest
+00001FC0  43F9 000033D3           1027  IFANDLDXD     LEA     SANDL,A1
+00001FC6  4EF9 0000295E           1028                  JMP     DSRCDDEST                               
+00001FCC  43F9 000033D3           1029  IFANDLAIXD    LEA     SANDL,A1
+00001FD2  4EF9 0000299E           1030                  JMP     AISRCDDEST                
+00001FD8  43F9 000033D3           1031  IFANDLIXD     LEA     SANDL,A1
+00001FDE  4EF9 000029C8           1032                  JMP     ISRCDDEST  
+00001FE4  43F9 000033D3           1033  IFANDLAAXD    LEA     SANDL,A1
+00001FEA  4EF9 000029E8           1034                  JMP     AASRCDDEST                
+00001FF0  43F9 000033D3           1035  IFANDLPRXD    LEA     SANDL,A1
+00001FF6  4EF9 00002A02           1036                  JMP     PRSRCDDEST                
+00001FFC  43F9 000033D3           1037  IFANDLPOXD    LEA     SANDL,A1
+00002002  4EF9 00002A2C           1038                  JMP     POSRCDDEST  
+00002008                          1039                  
+00002008                          1040  *addr indr dest
+00002008  43F9 000033D3           1041  IFANDLDXAI    LEA     SANDL,A1
+0000200E  4EF9 00002A56           1042                  JMP     DSRCADEST                
+00002014                          1043  
+00002014                          1044  *abs addr dest
+00002014  43F9 000033D3           1045  IFANDLDXAA    LEA     SANDL,A1
+0000201A  4EF9 00002D8E           1046                  JMP     DSRCAADEST                
+00002020                          1047  
+00002020                          1048  *pre decr dest
+00002020  43F9 000033D3           1049  IFANDLDXPR    LEA     SANDL,A1
+00002026  4EF9 00002E5C           1050                  JMP     DSRCPRDEST                  
+0000202C                          1051  
+0000202C                          1052  *post incr dest
+0000202C  43F9 000033D3           1053  IFANDLDXPO    LEA     SANDL,A1
+00002032  4EF9 00002F9A           1054                  JMP     DSRCPODEST 
+00002038                          1055  
+00002038                          1056  *---------------- OR Variants--------------*
+00002038                          1057  **ORB
+00002038                          1058  *data reg dest
+00002038  43F9 000033D9           1059  IFORBDXD     LEA     SORB,A1
+0000203E  4EF9 0000295E           1060                  JMP     DSRCDDEST                              
+00002044  43F9 000033D9           1061  IFORBAIXD    LEA     SORB,A1
+0000204A  4EF9 0000299E           1062                  JMP     AISRCDDEST                
+00002050  43F9 000033D9           1063  IFORBIXD     LEA     SORB,A1
+00002056  4EF9 000029C8           1064                  JMP     ISRCDDEST  
+0000205C  43F9 000033D9           1065  IFORBAAXD    LEA     SORB,A1
+00002062  4EF9 000029E8           1066                  JMP     AASRCDDEST                
+00002068  43F9 000033D9           1067  IFORBPRXD    LEA     SORB,A1
+0000206E  4EF9 00002A02           1068                  JMP     PRSRCDDEST                
+00002074  43F9 000033D9           1069  IFORBPOXD    LEA     SORB,A1
+0000207A  4EF9 00002A2C           1070                  JMP     POSRCDDEST  
+00002080                          1071                  
+00002080                          1072  *addr indr dest
+00002080  43F9 000033D9           1073  IFORBDXAI    LEA     SORB,A1
+00002086  4EF9 00002A56           1074                  JMP     DSRCADEST                
+0000208C                          1075  
+0000208C                          1076  *abs addr dest
+0000208C  43F9 000033D9           1077  IFORBDXAA    LEA     SORB,A1
+00002092  4EF9 00002D8E           1078                  JMP     DSRCAADEST                
+00002098                          1079  
+00002098                          1080  *pre decr dest
+00002098  43F9 000033D9           1081  IFORBDXPR    LEA     SORB,A1
+0000209E  4EF9 00002E5C           1082                  JMP     DSRCPRDEST                  
+000020A4                          1083  
+000020A4                          1084  *post incr dest
+000020A4  43F9 000033D9           1085  IFORBDXPO    LEA     SORB,A1
+000020AA  4EF9 00002F9A           1086                  JMP     DSRCPODEST                                          
+000020B0                          1087                  
+000020B0                          1088  **ORW
+000020B0                          1089  *data reg dest
+000020B0  43F9 000033DE           1090  IFORWDXD     LEA     SORW,A1
+000020B6  4EF9 0000295E           1091                  JMP     DSRCDDEST                              
+000020BC  43F9 000033DE           1092  IFORWAIXD    LEA     SORW,A1
+000020C2  4EF9 0000299E           1093                  JMP     AISRCDDEST                
+000020C8  43F9 000033DE           1094  IFORWIXD     LEA     SORW,A1
+000020CE  4EF9 000029C8           1095                  JMP     ISRCDDEST  
+000020D4  43F9 000033DE           1096  IFORWAAXD    LEA     SORW,A1
+000020DA  4EF9 000029E8           1097                  JMP     AASRCDDEST                
+000020E0  43F9 000033DE           1098  IFORWPRXD    LEA     SORW,A1
+000020E6  4EF9 00002A02           1099                  JMP     PRSRCDDEST                
+000020EC  43F9 000033DE           1100  IFORWPOXD    LEA     SORW,A1
+000020F2  4EF9 00002A2C           1101                  JMP     POSRCDDEST  
+000020F8                          1102                  
+000020F8                          1103  *addr indr dest
+000020F8  43F9 000033DE           1104  IFORWDXAI    LEA     SORW,A1
+000020FE  4EF9 00002A56           1105                  JMP     DSRCADEST                
+00002104                          1106  
+00002104                          1107  *abs addr dest
+00002104  43F9 000033DE           1108  IFORWDXAA    LEA     SORW,A1
+0000210A  4EF9 00002D8E           1109                  JMP     DSRCAADEST                
+00002110                          1110  
+00002110                          1111  *pre decr dest
+00002110  43F9 000033DE           1112  IFORWDXPR    LEA     SORW,A1
+00002116  4EF9 00002E5C           1113                  JMP     DSRCPRDEST                  
+0000211C                          1114  
+0000211C                          1115  *post incr dest
+0000211C  43F9 000033DE           1116  IFORWDXPO    LEA     SORW,A1
+00002122  4EF9 00002F9A           1117                  JMP     DSRCPODEST   
+00002128                          1118                  
+00002128                          1119  **ORL          
+00002128                          1120  
+00002128                          1121  *data reg dest
+00002128  43F9 000033E3           1122  IFORLDXD     LEA     SORL,A1
+0000212E  4EF9 0000295E           1123                  JMP     DSRCDDEST                               
+00002134  43F9 000033E3           1124  IFORLAIXD    LEA     SORL,A1
+0000213A  4EF9 0000299E           1125                  JMP     AISRCDDEST                
+00002140  43F9 000033E3           1126  IFORLIXD     LEA     SORL,A1
+00002146  4EF9 000029C8           1127                  JMP     ISRCDDEST  
+0000214C  43F9 000033E3           1128  IFORLAAXD    LEA     SORL,A1
+00002152  4EF9 000029E8           1129                  JMP     AASRCDDEST                
+00002158  43F9 000033E3           1130  IFORLPRXD    LEA     SORL,A1
+0000215E  4EF9 00002A02           1131                  JMP     PRSRCDDEST                
+00002164  43F9 000033E3           1132  IFORLPOXD    LEA     SORL,A1
+0000216A  4EF9 00002A2C           1133                  JMP     POSRCDDEST  
+00002170                          1134                  
+00002170                          1135  *addr indr dest
+00002170  43F9 000033E3           1136  IFORLDXAI    LEA     SORL,A1
+00002176  4EF9 00002A56           1137                  JMP     DSRCADEST                
+0000217C                          1138  
+0000217C                          1139  *abs addr dest
+0000217C  43F9 000033E3           1140  IFORLDXAA    LEA     SORL,A1
+00002182  4EF9 00002D8E           1141                  JMP     DSRCAADEST                
+00002188                          1142  
+00002188                          1143  *pre decr dest
+00002188  43F9 000033E3           1144  IFORLDXPR    LEA     SORL,A1
+0000218E  4EF9 00002E5C           1145                  JMP     DSRCPRDEST                  
+00002194                          1146  
+00002194                          1147  *post incr dest
+00002194  43F9 000033E3           1148  IFORLDXPO    LEA     SORL,A1
+0000219A  4EF9 00002F9A           1149                  JMP     DSRCPODEST 
+000021A0                          1150                  
+000021A0                          1151  *---------------- JSR Variants-------------*
+000021A0                          1152  *ea src
+000021A0  43F9 000033E8           1153  IFJSREA         LEA     SJSR,A1
+000021A6  4EF9 000028EC           1154                  JMP     EASRC    
+000021AC                          1155  
+000021AC  43F9 000033E8           1156  IFJSRAXAI       LEA     SJSR,A1
+000021B2  4EF9 000028F8           1157                  JMP     EASRCAI  
+000021B8                          1158  
+000021B8                          1159  *---------------- RTS Variants-------------*
+000021B8  43F9 000033EC           1160  IFRTS           LEA     SRTS,A1
+000021BE  6100 0F62               1161                  BSR     PRINTSTR
+000021C2  4EF8 111E               1162                  JMP     CONTINUE
+000021C6                          1163  
+000021C6                          1164  *---------------- Bcc Variants-------------*
+000021C6  43F9 000033FC           1165  IFBRA           LEA     SBRA,A1
+000021CC  4EF9 000028EC           1166                  JMP     EASRC    
+000021D2                          1167                  
+000021D2  43F9 000033F0           1168  IFBGT           LEA     SBGT,A1
+000021D8  4EF9 000028EC           1169                  JMP     EASRC    
+000021DE                          1170  
+000021DE  43F9 000033F4           1171  IFBLE           LEA     SBLE,A1
+000021E4  4EF9 000028EC           1172                  JMP     EASRC    
+000021EA                          1173  
+000021EA  43F9 000033F8           1174  IFBEQ           LEA     SBEQ,A1
+000021F0  4EF9 000028EC           1175                  JMP     EASRC                    
+000021F6                          1176  
+000021F6                          1177  *---------------- ASL Variants--------------*
+000021F6                          1178  **ASL
+000021F6                          1179  *data reg dest
+000021F6  43F9 00003400           1180  IFASLDXD        LEA     SASL,A1
+000021FC  4EF9 0000295E           1181                  JMP     DSRCDDEST  
+00002202  43F9 00003400           1182  IFASLIXD        LEA     SASL,A1
+00002208  4EF9 000029C8           1183                  JMP     ISRCDDEST                 
+0000220E                          1184  
+0000220E                          1185  *effective addresses
+0000220E  43F9 00003400           1186  IFASLEA         LEA     SASL,A1
+00002214  4EF9 000028EC           1187                  JMP     EASRC    
+0000221A                          1188  
+0000221A  43F9 00003400           1189  IFASLEAXAI      LEA     SASL,A1
+00002220  4EF9 000028F8           1190                  JMP     EASRCAI
+00002226                          1191  
+00002226  43F9 00003400           1192  IFASLEAXPR      LEA     SASL,A1
+0000222C  4EF9 00002914           1193                  JMP     EASRCPR 
+00002232                          1194  
+00002232  43F9 00003400           1195  IFASLEAXPO      LEA     SASL,A1
+00002238  4EF9 00002930           1196                  JMP     EASRCPO 
+0000223E                          1197  
+0000223E                          1198  **ASL.B
+0000223E                          1199  *data reg dest
+0000223E  43F9 00003404           1200  IFASLBDXD       LEA     SASLB,A1
+00002244  4EF9 0000295E           1201                  JMP     DSRCDDEST  
+0000224A  43F9 00003404           1202  IFASLBIXD       LEA     SASLB,A1
+00002250  4EF9 000029C8           1203                  JMP     ISRCDDEST                 
+00002256                          1204  
+00002256                          1205  *effective addresses
+00002256  43F9 00003404           1206  IFASLBEA        LEA     SASLB,A1
+0000225C  4EF9 000028EC           1207                  JMP     EASRC    
+00002262                          1208  
+00002262  43F9 00003404           1209  IFASLBEAXAI     LEA     SASLB,A1
+00002268  4EF9 000028F8           1210                  JMP     EASRCAI
+0000226E                          1211  
+0000226E  43F9 00003404           1212  IFASLBEAXPR     LEA     SASLB,A1
+00002274  4EF9 00002914           1213                  JMP     EASRCPR 
+0000227A                          1214  
+0000227A  43F9 00003404           1215  IFASLBEAXPO     LEA     SASLB,A1
+00002280  4EF9 00002930           1216                  JMP     EASRCPO 
+00002286                          1217  
+00002286                          1218  **ASL.W
+00002286                          1219  *data reg dest
+00002286  43F9 0000340A           1220  IFASLWDXD       LEA     SASLW,A1
+0000228C  4EF9 0000295E           1221                  JMP     DSRCDDEST  
+00002292  43F9 0000340A           1222  IFASLWIXD       LEA     SASLW,A1
+00002298  4EF9 000029C8           1223                  JMP     ISRCDDEST                 
+0000229E                          1224  
+0000229E                          1225  *effective addresses
+0000229E  43F9 0000340A           1226  IFASLWEA        LEA     SASLW,A1
+000022A4  4EF9 000028EC           1227                  JMP     EASRC    
+000022AA                          1228  
+000022AA  43F9 0000340A           1229  IFASLWEAXAI     LEA     SASLW,A1
+000022B0  4EF9 000028F8           1230                  JMP     EASRCAI
+000022B6                          1231  
+000022B6  43F9 0000340A           1232  IFASLWEAXPR     LEA     SASLW,A1
+000022BC  4EF9 00002914           1233                  JMP     EASRCPR 
+000022C2                          1234  
+000022C2  43F9 0000340A           1235  IFASLWEAXPO     LEA     SASLW,A1
+000022C8  4EF9 00002930           1236                  JMP     EASRCPO 
+000022CE                          1237  
+000022CE                          1238  **ASL.L
+000022CE                          1239  *data reg dest
+000022CE  43F9 00003410           1240  IFASLLDXD       LEA     SASLL,A1
+000022D4  4EF9 0000295E           1241                  JMP     DSRCDDEST  
+000022DA  43F9 00003410           1242  IFASLLIXD       LEA     SASLL,A1
+000022E0  4EF9 000029C8           1243                  JMP     ISRCDDEST                 
+000022E6                          1244  
+000022E6                          1245  *effective addresses
+000022E6  43F9 00003410           1246  IFASLLEA        LEA     SASLL,A1
+000022EC  4EF9 000028EC           1247                  JMP     EASRC    
+000022F2                          1248  
+000022F2  43F9 00003410           1249  IFASLLEAXAI     LEA     SASLL,A1
+000022F8  4EF9 000028F8           1250                  JMP     EASRCAI
+000022FE                          1251  
+000022FE  43F9 00003410           1252  IFASLLEAXPR     LEA     SASLL,A1
+00002304  4EF9 00002914           1253                  JMP     EASRCPR 
+0000230A                          1254  
+0000230A  43F9 00003410           1255  IFASLLEAXPO     LEA     SASLL,A1
+00002310  4EF9 00002930           1256                  JMP     EASRCPO 
+00002316                          1257  
+00002316                          1258  *---------------- ASR Variants--------------*
+00002316                          1259  **ASR
+00002316                          1260  *data reg dest
+00002316  43F9 00003416           1261  IFASRDXD        LEA     SASR,A1
+0000231C  4EF9 0000295E           1262                  JMP     DSRCDDEST  
+00002322  43F9 00003416           1263  IFASRIXD        LEA     SASR,A1
+00002328  4EF9 000029C8           1264                  JMP     ISRCDDEST                 
+0000232E                          1265  
+0000232E                          1266  *effective addresses
+0000232E  43F9 00003416           1267  IFASREA         LEA     SASR,A1
+00002334  4EF9 000028EC           1268                  JMP     EASRC    
+0000233A                          1269  
+0000233A  43F9 00003416           1270  IFASREAXAI      LEA     SASR,A1
+00002340  4EF9 000028F8           1271                  JMP     EASRCAI
+00002346                          1272  
+00002346  43F9 00003416           1273  IFASREAXPR      LEA     SASR,A1
+0000234C  4EF9 00002914           1274                  JMP     EASRCPR 
+00002352                          1275  
+00002352  43F9 00003416           1276  IFASREAXPO      LEA     SASR,A1
+00002358  4EF9 00002930           1277                  JMP     EASRCPO 
+0000235E                          1278  
+0000235E                          1279  **ASR.B
+0000235E                          1280  *data reg dest
+0000235E  43F9 0000341A           1281  IFASRBDXD       LEA     SASRB,A1
+00002364  4EF9 0000295E           1282                  JMP     DSRCDDEST  
+0000236A  43F9 0000341A           1283  IFASRBIXD       LEA     SASRB,A1
+00002370  4EF9 000029C8           1284                  JMP     ISRCDDEST                 
+00002376                          1285  
+00002376                          1286  *effective addresses
+00002376  43F9 0000341A           1287  IFASRBEA        LEA     SASRB,A1
+0000237C  4EF9 000028EC           1288                  JMP     EASRC    
+00002382                          1289  
+00002382  43F9 0000341A           1290  IFASRBEAXAI     LEA     SASRB,A1
+00002388  4EF9 000028F8           1291                  JMP     EASRCAI
+0000238E                          1292  
+0000238E  43F9 0000341A           1293  IFASRBEAXPR     LEA     SASRB,A1
+00002394  4EF9 00002914           1294                  JMP     EASRCPR 
+0000239A                          1295  
+0000239A  43F9 0000341A           1296  IFASRBEAXPO     LEA     SASRB,A1
+000023A0  4EF9 00002930           1297                  JMP     EASRCPO 
+000023A6                          1298  
+000023A6                          1299  **ASR.W
+000023A6                          1300  *data reg dest
+000023A6  43F9 00003420           1301  IFASRWDXD       LEA     SASRW,A1
+000023AC  4EF9 0000295E           1302                  JMP     DSRCDDEST  
+000023B2  43F9 00003420           1303  IFASRWIXD       LEA     SASRW,A1
+000023B8  4EF9 000029C8           1304                  JMP     ISRCDDEST                 
+000023BE                          1305  
+000023BE                          1306  *effective addresses
+000023BE  43F9 00003420           1307  IFASRWEA        LEA     SASRW,A1
+000023C4  4EF9 000028EC           1308                  JMP     EASRC    
+000023CA                          1309  
+000023CA  43F9 00003420           1310  IFASRWEAXAI     LEA     SASRW,A1
+000023D0  4EF9 000028F8           1311                  JMP     EASRCAI
+000023D6                          1312  
+000023D6  43F9 00003420           1313  IFASRWEAXPR     LEA     SASRW,A1
+000023DC  4EF9 00002914           1314                  JMP     EASRCPR 
+000023E2                          1315  
+000023E2  43F9 00003420           1316  IFASRWEAXPO     LEA     SASRW,A1
+000023E8  4EF9 00002930           1317                  JMP     EASRCPO 
+000023EE                          1318  
+000023EE                          1319  **ASR.L
+000023EE                          1320  *data reg dest
+000023EE  43F9 00003426           1321  IFASRLDXD       LEA     SASRL,A1
+000023F4  4EF9 0000295E           1322                  JMP     DSRCDDEST  
+000023FA  43F9 00003426           1323  IFASRLIXD       LEA     SASRL,A1
+00002400  4EF9 000029C8           1324                  JMP     ISRCDDEST                 
+00002406                          1325  
+00002406                          1326  *effective addresses
+00002406  43F9 00003426           1327  IFASRLEA        LEA     SASRL,A1
+0000240C  4EF9 000028EC           1328                  JMP     EASRC    
+00002412                          1329  
+00002412  43F9 00003426           1330  IFASRLEAXAI     LEA     SASRL,A1
+00002418  4EF9 000028F8           1331                  JMP     EASRCAI
+0000241E                          1332  
+0000241E  43F9 00003426           1333  IFASRLEAXPR     LEA     SASRL,A1
+00002424  4EF9 00002914           1334                  JMP     EASRCPR 
+0000242A                          1335  
+0000242A  43F9 00003426           1336  IFASRLEAXPO     LEA     SASRL,A1
+00002430  4EF9 00002930           1337                  JMP     EASRCPO 
+00002436                          1338  
+00002436                          1339  *--------------- LSL Variants--------------*
+00002436                          1340  **LSL
+00002436                          1341  *data reg dest
+00002436  43F9 0000342C           1342  IFLSLDXD        LEA     SLSL,A1
+0000243C  4EF9 0000295E           1343                  JMP     DSRCDDEST  
+00002442  43F9 0000342C           1344  IFLSLIXD        LEA     SLSL,A1
+00002448  4EF9 000029C8           1345                  JMP     ISRCDDEST                 
+0000244E                          1346  
+0000244E                          1347  *effective addresses
+0000244E  43F9 0000342C           1348  IFLSLEA         LEA     SLSL,A1
+00002454  4EF9 000028EC           1349                  JMP     EASRC    
+0000245A                          1350  
+0000245A  43F9 0000342C           1351  IFLSLEAXAI      LEA     SLSL,A1
+00002460  4EF9 000028F8           1352                  JMP     EASRCAI
+00002466                          1353  
+00002466  43F9 0000342C           1354  IFLSLEAXPR      LEA     SLSL,A1
+0000246C  4EF9 00002914           1355                  JMP     EASRCPR 
+00002472                          1356  
+00002472  43F9 0000342C           1357  IFLSLEAXPO      LEA     SLSL,A1
+00002478  4EF9 00002930           1358                  JMP     EASRCPO 
+0000247E                          1359  
+0000247E                          1360  **LSL.B
+0000247E                          1361  *data reg dest
+0000247E  43F9 00003430           1362  IFLSLBDXD       LEA     SLSLB,A1
+00002484  4EF9 0000295E           1363                  JMP     DSRCDDEST  
+0000248A  43F9 00003430           1364  IFLSLBIXD       LEA     SLSLB,A1
+00002490  4EF9 000029C8           1365                  JMP     ISRCDDEST                 
+00002496                          1366  
+00002496                          1367  *effective addresses
+00002496  43F9 00003430           1368  IFLSLBEA        LEA     SLSLB,A1
+0000249C  4EF9 000028EC           1369                  JMP     EASRC    
+000024A2                          1370  
+000024A2  43F9 00003430           1371  IFLSLBEAXAI     LEA     SLSLB,A1
+000024A8  4EF9 000028F8           1372                  JMP     EASRCAI
+000024AE                          1373  
+000024AE  43F9 00003430           1374  IFLSLBEAXPR     LEA     SLSLB,A1
+000024B4  4EF9 00002914           1375                  JMP     EASRCPR 
+000024BA                          1376  
+000024BA  43F9 00003430           1377  IFLSLBEAXPO     LEA     SLSLB,A1
+000024C0  4EF9 00002930           1378                  JMP     EASRCPO 
+000024C6                          1379  
+000024C6                          1380  **LSL.W
+000024C6                          1381  *data reg dest
+000024C6  43F9 00003436           1382  IFLSLWDXD       LEA     SLSLW,A1
+000024CC  4EF9 0000295E           1383                  JMP     DSRCDDEST  
+000024D2  43F9 00003436           1384  IFLSLWIXD       LEA     SLSLW,A1
+000024D8  4EF9 000029C8           1385                  JMP     ISRCDDEST                 
+000024DE                          1386  
+000024DE                          1387  *effective addresses
+000024DE  43F9 00003436           1388  IFLSLWEA        LEA     SLSLW,A1
+000024E4  4EF9 000028EC           1389                  JMP     EASRC    
+000024EA                          1390  
+000024EA  43F9 00003436           1391  IFLSLWEAXAI     LEA     SLSLW,A1
+000024F0  4EF9 000028F8           1392                  JMP     EASRCAI
+000024F6                          1393  
+000024F6  43F9 00003436           1394  IFLSLWEAXPR     LEA     SLSLW,A1
+000024FC  4EF9 00002914           1395                  JMP     EASRCPR 
+00002502                          1396  
+00002502  43F9 00003436           1397  IFLSLWEAXPO     LEA     SLSLW,A1
+00002508  4EF9 00002930           1398                  JMP     EASRCPO 
+0000250E                          1399  
+0000250E                          1400  **LSL.L
+0000250E                          1401  *data reg dest
+0000250E  43F9 0000343C           1402  IFLSLLDXD       LEA     SLSLL,A1
+00002514  4EF9 0000295E           1403                  JMP     DSRCDDEST  
+0000251A  43F9 0000343C           1404  IFLSLLIXD       LEA     SLSLL,A1
+00002520  4EF9 000029C8           1405                  JMP     ISRCDDEST                 
+00002526                          1406  
+00002526                          1407  *effective addresses
+00002526  43F9 0000343C           1408  IFLSLLEA        LEA     SLSLL,A1
+0000252C  4EF9 000028EC           1409                  JMP     EASRC    
+00002532                          1410  
+00002532  43F9 0000343C           1411  IFLSLLEAXAI     LEA     SLSLL,A1
+00002538  4EF9 000028F8           1412                  JMP     EASRCAI
+0000253E                          1413  
+0000253E  43F9 0000343C           1414  IFLSLLEAXPR     LEA     SLSLL,A1
+00002544  4EF9 00002914           1415                  JMP     EASRCPR 
+0000254A                          1416  
+0000254A  43F9 0000343C           1417  IFLSLLEAXPO     LEA     SLSLL,A1
+00002550  4EF9 00002930           1418                  JMP     EASRCPO 
+00002556                          1419  
+00002556                          1420  *--------------- LSR Variants--------------*
+00002556                          1421  **LSR
+00002556                          1422  *data reg dest
+00002556  43F9 00003442           1423  IFLSRDXD        LEA     SLSR,A1
+0000255C  4EF9 0000295E           1424                  JMP     DSRCDDEST  
+00002562  43F9 00003442           1425  IFLSRIXD        LEA     SLSR,A1
+00002568  4EF9 000029C8           1426                  JMP     ISRCDDEST                 
+0000256E                          1427  
+0000256E                          1428  *effective addresses
+0000256E  43F9 00003442           1429  IFLSREA         LEA     SLSR,A1
+00002574  4EF9 000028EC           1430                  JMP     EASRC    
+0000257A                          1431  
+0000257A  43F9 00003442           1432  IFLSREAXAI      LEA     SLSR,A1
+00002580  4EF9 000028F8           1433                  JMP     EASRCAI
+00002586                          1434  
+00002586  43F9 00003442           1435  IFLSREAXPR      LEA     SLSR,A1
+0000258C  4EF9 00002914           1436                  JMP     EASRCPR 
+00002592                          1437  
+00002592  43F9 00003442           1438  IFLSREAXPO      LEA     SLSR,A1
+00002598  4EF9 00002930           1439                  JMP     EASRCPO 
+0000259E                          1440  
+0000259E                          1441  **LSR.B
+0000259E                          1442  *data reg dest
+0000259E  43F9 00003446           1443  IFLSRBDXD       LEA     SLSRB,A1
+000025A4  4EF9 0000295E           1444                  JMP     DSRCDDEST  
+000025AA  43F9 00003446           1445  IFLSRBIXD       LEA     SLSRB,A1
+000025B0  4EF9 000029C8           1446                  JMP     ISRCDDEST                 
+000025B6                          1447  
+000025B6                          1448  *effective addresses
+000025B6  43F9 00003446           1449  IFLSRBEA        LEA     SLSRB,A1
+000025BC  4EF9 000028EC           1450                  JMP     EASRC    
+000025C2                          1451  
+000025C2  43F9 00003446           1452  IFLSRBEAXAI     LEA     SLSRB,A1
+000025C8  4EF9 000028F8           1453                  JMP     EASRCAI
+000025CE                          1454  
+000025CE  43F9 00003446           1455  IFLSRBEAXPR     LEA     SLSRB,A1
+000025D4  4EF9 00002914           1456                  JMP     EASRCPR 
+000025DA                          1457  
+000025DA  43F9 00003446           1458  IFLSRBEAXPO     LEA     SLSRB,A1
+000025E0  4EF9 00002930           1459                  JMP     EASRCPO 
+000025E6                          1460  
+000025E6                          1461  **LSR.W
+000025E6                          1462  *data reg dest
+000025E6  43F9 0000344C           1463  IFLSRWDXD       LEA     SLSRW,A1
+000025EC  4EF9 0000295E           1464                  JMP     DSRCDDEST  
+000025F2  43F9 0000344C           1465  IFLSRWIXD       LEA     SLSRW,A1
+000025F8  4EF9 000029C8           1466                  JMP     ISRCDDEST                 
+000025FE                          1467  
+000025FE                          1468  *effective addresses
+000025FE  43F9 0000344C           1469  IFLSRWEA        LEA     SLSRW,A1
+00002604  4EF9 000028EC           1470                  JMP     EASRC    
+0000260A                          1471  
+0000260A  43F9 0000344C           1472  IFLSRWEAXAI     LEA     SLSRW,A1
+00002610  4EF9 000028F8           1473                  JMP     EASRCAI
+00002616                          1474  
+00002616  43F9 0000344C           1475  IFLSRWEAXPR     LEA     SLSRW,A1
+0000261C  4EF9 00002914           1476                  JMP     EASRCPR 
+00002622                          1477  
+00002622  43F9 0000344C           1478  IFLSRWEAXPO     LEA     SLSRW,A1
+00002628  4EF9 00002930           1479                  JMP     EASRCPO 
+0000262E                          1480  
+0000262E                          1481  **LSR.L
+0000262E                          1482  *data reg dest
+0000262E  43F9 00003452           1483  IFLSRLDXD       LEA     SLSRL,A1
+00002634  4EF9 0000295E           1484                  JMP     DSRCDDEST  
+0000263A  43F9 00003452           1485  IFLSRLIXD       LEA     SLSRL,A1
+00002640  4EF9 000029C8           1486                  JMP     ISRCDDEST                 
+00002646                          1487  
+00002646                          1488  *effective addresses
+00002646  43F9 00003452           1489  IFLSRLEA        LEA     SLSRL,A1
+0000264C  4EF9 000028EC           1490                  JMP     EASRC    
+00002652                          1491  
+00002652  43F9 00003452           1492  IFLSRLEAXAI     LEA     SLSRL,A1
+00002658  4EF9 000028F8           1493                  JMP     EASRCAI
+0000265E                          1494  
+0000265E  43F9 00003452           1495  IFLSRLEAXPR     LEA     SLSRL,A1
+00002664  4EF9 00002914           1496                  JMP     EASRCPR 
+0000266A                          1497  
+0000266A  43F9 00003452           1498  IFLSRLEAXPO     LEA     SLSRL,A1
+00002670  4EF9 00002930           1499                  JMP     EASRCPO 
+00002676                          1500  
+00002676                          1501  *--------------- ROL Variants--------------*
+00002676                          1502  **ROL
+00002676                          1503  *data reg dest
+00002676  43F9 00003458           1504  IFROLDXD        LEA     SROL,A1
+0000267C  4EF9 0000295E           1505                  JMP     DSRCDDEST  
+00002682  43F9 00003458           1506  IFROLIXD        LEA     SROL,A1
+00002688  4EF9 000029C8           1507                  JMP     ISRCDDEST                 
+0000268E                          1508  
+0000268E                          1509  *effective addresses
+0000268E  43F9 00003458           1510  IFROLEA         LEA     SROL,A1
+00002694  4EF9 000028EC           1511                  JMP     EASRC    
+0000269A                          1512  
+0000269A  43F9 00003458           1513  IFROLEAXAI      LEA     SROL,A1
+000026A0  4EF9 000028F8           1514                  JMP     EASRCAI
+000026A6                          1515  
+000026A6  43F9 00003458           1516  IFROLEAXPR      LEA     SROL,A1
+000026AC  4EF9 00002914           1517                  JMP     EASRCPR 
+000026B2                          1518  
+000026B2  43F9 00003458           1519  IFROLEAXPO      LEA     SROL,A1
+000026B8  4EF9 00002930           1520                  JMP     EASRCPO 
+000026BE                          1521  
+000026BE                          1522  **ROL.B
+000026BE                          1523  *data reg dest
+000026BE  43F9 0000345C           1524  IFROLBDXD       LEA     SROLB,A1
+000026C4  4EF9 0000295E           1525                  JMP     DSRCDDEST  
+000026CA  43F9 0000345C           1526  IFROLBIXD       LEA     SROLB,A1
+000026D0  4EF9 000029C8           1527                  JMP     ISRCDDEST                 
+000026D6                          1528  
+000026D6                          1529  *effective addresses
+000026D6  43F9 0000345C           1530  IFROLBEA        LEA     SROLB,A1
+000026DC  4EF9 000028EC           1531                  JMP     EASRC    
+000026E2                          1532  
+000026E2  43F9 0000345C           1533  IFROLBEAXAI     LEA     SROLB,A1
+000026E8  4EF9 000028F8           1534                  JMP     EASRCAI
+000026EE                          1535  
+000026EE  43F9 0000345C           1536  IFROLBEAXPR     LEA     SROLB,A1
+000026F4  4EF9 00002914           1537                  JMP     EASRCPR 
+000026FA                          1538  
+000026FA  43F9 0000345C           1539  IFROLBEAXPO     LEA     SROLB,A1
+00002700  4EF9 00002930           1540                  JMP     EASRCPO 
+00002706                          1541  
+00002706                          1542  **ROL.W
+00002706                          1543  *data reg dest
+00002706  43F9 00003462           1544  IFROLWDXD       LEA     SROLW,A1
+0000270C  4EF9 0000295E           1545                  JMP     DSRCDDEST  
+00002712  43F9 00003462           1546  IFROLWIXD       LEA     SROLW,A1
+00002718  4EF9 000029C8           1547                  JMP     ISRCDDEST                 
+0000271E                          1548  
+0000271E                          1549  *effective addresses
+0000271E  43F9 00003462           1550  IFROLWEA        LEA     SROLW,A1
+00002724  4EF9 000028EC           1551                  JMP     EASRC    
+0000272A                          1552  
+0000272A  43F9 00003462           1553  IFROLWEAXAI     LEA     SROLW,A1
+00002730  4EF9 000028F8           1554                  JMP     EASRCAI
+00002736                          1555  
+00002736  43F9 00003462           1556  IFROLWEAXPR     LEA     SROLW,A1
+0000273C  4EF9 00002914           1557                  JMP     EASRCPR 
+00002742                          1558  
+00002742  43F9 00003462           1559  IFROLWEAXPO     LEA     SROLW,A1
+00002748  4EF9 00002930           1560                  JMP     EASRCPO 
+0000274E                          1561  
+0000274E                          1562  **ROL.L
+0000274E                          1563  *data reg dest
+0000274E  43F9 00003468           1564  IFROLLDXD       LEA     SROLL,A1
+00002754  4EF9 0000295E           1565                  JMP     DSRCDDEST  
+0000275A  43F9 00003468           1566  IFROLLIXD       LEA     SROLL,A1
+00002760  4EF9 000029C8           1567                  JMP     ISRCDDEST                 
+00002766                          1568  
+00002766                          1569  *effective addresses
+00002766  43F9 00003468           1570  IFROLLEA        LEA     SROLL,A1
+0000276C  4EF9 000028EC           1571                  JMP     EASRC    
+00002772                          1572  
+00002772  43F9 00003468           1573  IFROLLEAXAI     LEA     SROLL,A1
+00002778  4EF9 000028F8           1574                  JMP     EASRCAI
+0000277E                          1575  
+0000277E  43F9 00003468           1576  IFROLLEAXPR     LEA     SROLL,A1
+00002784  4EF9 00002914           1577                  JMP     EASRCPR 
+0000278A                          1578  
+0000278A  43F9 00003468           1579  IFROLLEAXPO     LEA     SROLL,A1
+00002790  4EF9 00002930           1580                  JMP     EASRCPO 
+00002796                          1581  
+00002796                          1582  *--------------- ROR Variants--------------*
+00002796                          1583  **ROR
+00002796                          1584  *data reg dest
+00002796  43F9 0000346E           1585  IFRORDXD        LEA     SROR,A1
+0000279C  4EF9 0000295E           1586                  JMP     DSRCDDEST  
+000027A2  43F9 0000346E           1587  IFRORIXD        LEA     SROR,A1
+000027A8  4EF9 000029C8           1588                  JMP     ISRCDDEST                 
+000027AE                          1589  
+000027AE                          1590  *effective addresses
+000027AE  43F9 0000346E           1591  IFROREA         LEA     SROR,A1
+000027B4  4EF9 000028EC           1592                  JMP     EASRC    
+000027BA                          1593  
+000027BA  43F9 0000346E           1594  IFROREAXAI      LEA     SROR,A1
+000027C0  4EF9 000028F8           1595                  JMP     EASRCAI
+000027C6                          1596  
+000027C6  43F9 0000346E           1597  IFROREAXPR      LEA     SROR,A1
+000027CC  4EF9 00002914           1598                  JMP     EASRCPR 
+000027D2                          1599  
+000027D2  43F9 0000346E           1600  IFROREAXPO      LEA     SROR,A1
+000027D8  4EF9 00002930           1601                  JMP     EASRCPO 
+000027DE                          1602  
+000027DE                          1603  **ROR.B
+000027DE                          1604  *data reg dest
+000027DE  43F9 00003472           1605  IFRORBDXD       LEA     SRORB,A1
+000027E4  4EF9 0000295E           1606                  JMP     DSRCDDEST  
+000027EA  43F9 00003472           1607  IFRORBIXD       LEA     SRORB,A1
+000027F0  4EF9 000029C8           1608                  JMP     ISRCDDEST                 
+000027F6                          1609  
+000027F6                          1610  *effective addresses
+000027F6  43F9 00003472           1611  IFRORBEA        LEA     SRORB,A1
+000027FC  4EF9 000028EC           1612                  JMP     EASRC    
+00002802                          1613  
+00002802  43F9 00003472           1614  IFRORBEAXAI     LEA     SRORB,A1
+00002808  4EF9 000028F8           1615                  JMP     EASRCAI
+0000280E                          1616  
+0000280E  43F9 00003472           1617  IFRORBEAXPR     LEA     SRORB,A1
+00002814  4EF9 00002914           1618                  JMP     EASRCPR 
+0000281A                          1619  
+0000281A  43F9 00003472           1620  IFRORBEAXPO     LEA     SRORB,A1
+00002820  4EF9 00002930           1621                  JMP     EASRCPO 
+00002826                          1622  
+00002826                          1623  **ROR.W
+00002826                          1624  *data reg dest
+00002826  43F9 00003478           1625  IFRORWDXD       LEA     SRORW,A1
+0000282C  4EF9 0000295E           1626                  JMP     DSRCDDEST  
+00002832  43F9 00003478           1627  IFRORWIXD       LEA     SRORW,A1
+00002838  4EF9 000029C8           1628                  JMP     ISRCDDEST                 
+0000283E                          1629  
+0000283E                          1630  *effective addresses
+0000283E  43F9 00003478           1631  IFRORWEA        LEA     SRORW,A1
+00002844  4EF9 000028EC           1632                  JMP     EASRC    
+0000284A                          1633  
+0000284A  43F9 00003478           1634  IFRORWEAXAI     LEA     SRORW,A1
+00002850  4EF9 000028F8           1635                  JMP     EASRCAI
+00002856                          1636  
+00002856  43F9 00003478           1637  IFRORWEAXPR     LEA     SRORW,A1
+0000285C  4EF9 00002914           1638                  JMP     EASRCPR 
+00002862                          1639  
+00002862  43F9 00003478           1640  IFRORWEAXPO     LEA     SRORW,A1
+00002868  4EF9 00002930           1641                  JMP     EASRCPO 
+0000286E                          1642  
+0000286E                          1643  **ROR.L
+0000286E                          1644  *data reg dest
+0000286E  43F9 0000347E           1645  IFRORLDXD       LEA     SRORL,A1
+00002874  4EF9 0000295E           1646                  JMP     DSRCDDEST  
+0000287A  43F9 0000347E           1647  IFRORLIXD       LEA     SRORL,A1
+00002880  4EF9 000029C8           1648                  JMP     ISRCDDEST                 
+00002886                          1649  
+00002886                          1650  *effective addresses
+00002886  43F9 0000347E           1651  IFRORLEA        LEA     SRORL,A1
+0000288C  4EF9 000028EC           1652                  JMP     EASRC    
+00002892                          1653  
+00002892  43F9 0000347E           1654  IFRORLEAXAI     LEA     SRORL,A1
+00002898  4EF9 000028F8           1655                  JMP     EASRCAI
+0000289E                          1656  
+0000289E  43F9 0000347E           1657  IFRORLEAXPR     LEA     SRORL,A1
+000028A4  4EF9 00002914           1658                  JMP     EASRCPR 
+000028AA                          1659  
+000028AA  43F9 0000347E           1660  IFRORLEAXPO     LEA     SRORL,A1
+000028B0  4EF9 00002930           1661                  JMP     EASRCPO 
+000028B6                          1662                 
+000028B6                          1663  *----------------Bad Data-------------*             
+000028B6  43F9 00003181           1664  IFBADDATA       LEA     DATA,A1
+000028BC  6100 0864               1665                  BSR     PRINTSTR
+000028C0  6100 0816               1666                  BSR     PRINTAASRC
+000028C4  6100 0856               1667                  BSR     PRINTCRLF
+000028C8  4EF8 111E               1668                  JMP     CONTINUE  
+000028CC                          1669                  
+000028CC  43F9 00003186           1670  IFINVADDRMODE   LEA     OPCODE,A1
+000028D2  6100 084E               1671                  BSR     PRINTSTR
+000028D6  6100 0800               1672                  BSR     PRINTAASRC
+000028DA  43F9 0000318D           1673                  LEA     INVADDR,A1
+000028E0  6100 0840               1674                  BSR     PRINTSTR
+000028E4  6100 0836               1675                  BSR     PRINTCRLF
+000028E8  4EF8 111E               1676                  JMP     CONTINUE                 
+000028EC                          1677  
+000028EC                          1678  *-------------------------------------------*
+000028EC                          1679  *----------------OPERAND DATA----------------*
+000028EC                          1680  *-------------------------------------------*                 
+000028EC                          1681  *guess this is now a section now
+000028EC                          1682  *i was hoping for the one buggy EA but nope
+000028EC                          1683  *effective addresses
+000028EC  6100 0834               1684  EASRC           BSR     PRINTSTR *EA SPORTS ITS IN THE GAME
+000028F0  6100 07E6               1685                  BSR     PRINTAASRC
+000028F4  4EF8 111E               1686                  JMP     CONTINUE
+000028F8                          1687                  
+000028F8  6100 0828               1688  EASRCAI         BSR     PRINTSTR
+000028FC  43F9 0000331A           1689                  LEA     AISRC,A1
+00002902  6100 0804               1690                  BSR     FIRSTOP
+00002906  43F9 00003339           1691                  LEA     CLPAR,A1
+0000290C  6100 0814               1692                  BSR     PRINTSTR
+00002910  4EF8 111E               1693                  JMP     CONTINUE 
+00002914                          1694  
+00002914  6100 080C               1695  EASRCPR         BSR     PRINTSTR
+00002918  43F9 00003315           1696                  LEA     PRSRC,A1
+0000291E  6100 07E8               1697                  BSR     FIRSTOP
+00002922  43F9 00003339           1698                  LEA     CLPAR,A1
+00002928  6100 07F8               1699                  BSR     PRINTSTR 
+0000292C  4EF8 111E               1700                  JMP     CONTINUE
+00002930                          1701  
+00002930  6100 07F0               1702  EASRCPO         BSR     PRINTSTR
+00002934  43F9 0000331A           1703                  LEA     AISRC,A1
+0000293A  6100 07CC               1704                  BSR     FIRSTOP
+0000293E  43F9 00003332           1705                  LEA     PODEST,A1
+00002944  6100 07DC               1706                  BSR     PRINTSTR
+00002948  4EF8 111E               1707                  JMP     CONTINUE 
+0000294C                          1708  
+0000294C  6100 07D4               1709  EASRCD          BSR     PRINTSTR
+00002950  43F9 0000330C           1710                  LEA     DSRC,A1
+00002956  6100 07B0               1711                  BSR     FIRSTOP
+0000295A  4EF8 111E               1712                  JMP     CONTINUE    
+0000295E                          1713  
+0000295E                          1714  *----------------Data Register Dest-----------*
+0000295E                          1715  
+0000295E                          1716  *data reg to data reg
+0000295E  6100 07C2               1717  DSRCDDEST       BSR     PRINTSTR
+00002962  43F9 0000330C           1718                  LEA     DSRC,A1
+00002968  6100 079E               1719                  BSR     FIRSTOP
+0000296C  43F9 00003321           1720                  LEA     DDEST,A1
+00002972  6100 079E               1721                  BSR     SECONDOP
+00002976  6100 07A4               1722                  BSR     PRINTCRLF
+0000297A  4EF8 111E               1723                  JMP     CONTINUE  
+0000297E                          1724   
+0000297E                          1725  *addr reg to data reg               
+0000297E  6100 07A2               1726  ASRCDDEST       BSR     PRINTSTR
+00002982  43F9 0000330F           1727                  LEA     ASRC,A1
+00002988  6100 077E               1728                  BSR     FIRSTOP
+0000298C  43F9 00003321           1729                  LEA     DDEST,A1
+00002992  6100 077E               1730                  BSR     SECONDOP
+00002996  6100 0784               1731                  BSR     PRINTCRLF
+0000299A  4EF8 111E               1732                  JMP     CONTINUE   
+0000299E                          1733  
+0000299E                          1734  *addr indirect to data reg 
+0000299E  6100 0782               1735  AISRCDDEST      BSR     PRINTSTR
+000029A2  43F9 0000331A           1736                  LEA     AISRC,A1
+000029A8  6100 075E               1737                  BSR     FIRSTOP
+000029AC  43F9 00003339           1738                  LEA     CLPAR,A1
+000029B2  6100 076E               1739                  BSR     PRINTSTR
+000029B6  43F9 00003321           1740                  LEA     DDEST,A1
+000029BC  6100 0754               1741                  BSR     SECONDOP
+000029C0  6100 075A               1742                  BSR     PRINTCRLF
+000029C4  4EF8 111E               1743                  JMP     CONTINUE     
+000029C8                          1744  
+000029C8                          1745  *immediate data to data reg
+000029C8  6100 0758               1746  ISRCDDEST       BSR     PRINTSTR
+000029CC  43F9 00003312           1747                  LEA     ISRC,A1
+000029D2  6100 0734               1748                  BSR     FIRSTOP
+000029D6  43F9 00003321           1749                  LEA     DDEST,A1
+000029DC  6100 0734               1750                  BSR     SECONDOP
+000029E0  6100 073A               1751                  BSR     PRINTCRLF
+000029E4  4EF8 111E               1752                  JMP     CONTINUE   
+000029E8                          1753  
+000029E8                          1754  *abs addr to data reg                
+000029E8  6100 0738               1755  AASRCDDEST      BSR     PRINTSTR
+000029EC  6100 06EA               1756                  BSR     PRINTAASRC
+000029F0  43F9 00003321           1757                  LEA     DDEST,A1
+000029F6  6100 071A               1758                  BSR     SECONDOP
+000029FA  6100 0720               1759                  BSR     PRINTCRLF
+000029FE  4EF8 111E               1760                  JMP     CONTINUE   
+00002A02                          1761  
+00002A02                          1762  *pre decr to data reg
+00002A02  6100 071E               1763  PRSRCDDEST      BSR     PRINTSTR
+00002A06  43F9 00003315           1764                  LEA     PRSRC,A1
+00002A0C  6100 06FA               1765                  BSR     FIRSTOP
+00002A10  43F9 00003339           1766                  LEA     CLPAR,A1
+00002A16  6100 070A               1767                  BSR     PRINTSTR
+00002A1A  43F9 00003321           1768                  LEA     DDEST,A1
+00002A20  6100 06F0               1769                  BSR     SECONDOP
+00002A24  6100 06F6               1770                  BSR     PRINTCRLF
+00002A28  4EF8 111E               1771                  JMP     CONTINUE    
+00002A2C                          1772  
+00002A2C                          1773  *post incre to data reg
+00002A2C  6100 06F4               1774  POSRCDDEST      BSR     PRINTSTR
+00002A30  43F9 0000331A           1775                  LEA     AISRC,A1
+00002A36  6100 06D0               1776                  BSR     FIRSTOP
+00002A3A  43F9 00003332           1777                  LEA     PODEST,A1
+00002A40  6100 06E0               1778                  BSR     PRINTSTR
+00002A44  43F9 00003321           1779                  LEA     DDEST,A1
+00002A4A  6100 06C6               1780                  BSR     SECONDOP
+00002A4E  6100 06CC               1781                  BSR     PRINTCRLF
+00002A52  4EF8 111E               1782                  JMP     CONTINUE   
+00002A56                          1783  
+00002A56                          1784  *----------------Address Register Dest-----------* 
+00002A56                          1785                 
+00002A56                          1786  *data reg to addr reg
+00002A56  6100 06CA               1787  DSRCADEST       BSR     PRINTSTR
+00002A5A  43F9 0000330C           1788                  LEA     DSRC,A1
+00002A60  6100 06A6               1789                  BSR     FIRSTOP
+00002A64  43F9 00003324           1790                  LEA     ADEST,A1
+00002A6A  6100 06A6               1791                  BSR     SECONDOP
+00002A6E  6100 06AC               1792                  BSR     PRINTCRLF
+00002A72  4EF8 111E               1793                  JMP     CONTINUE  
+00002A76                          1794   
+00002A76                          1795  *addr reg to addr reg               
+00002A76  6100 06AA               1796  ASRCADEST       BSR     PRINTSTR
+00002A7A  43F9 0000330F           1797                  LEA     ASRC,A1
+00002A80  6100 0686               1798                  BSR     FIRSTOP
+00002A84  43F9 00003324           1799                  LEA     ADEST,A1
+00002A8A  6100 0686               1800                  BSR     SECONDOP
+00002A8E  6100 068C               1801                  BSR     PRINTCRLF
+00002A92  4EF8 111E               1802                  JMP     CONTINUE   
+00002A96                          1803  
+00002A96                          1804  *addr indirect to addr reg 
+00002A96  6100 068A               1805  AISRCADEST      BSR     PRINTSTR
+00002A9A  43F9 0000331A           1806                  LEA     AISRC,A1
+00002AA0  6100 0666               1807                  BSR     FIRSTOP
+00002AA4  43F9 00003339           1808                  LEA     CLPAR,A1
+00002AAA  6100 0676               1809                  BSR     PRINTSTR
+00002AAE  43F9 00003324           1810                  LEA     ADEST,A1
+00002AB4  6100 065C               1811                  BSR     SECONDOP
+00002AB8  6100 0662               1812                  BSR     PRINTCRLF
+00002ABC  4EF8 111E               1813                  JMP     CONTINUE     
+00002AC0                          1814  
+00002AC0                          1815  *immediate data to addr reg
+00002AC0  6100 0660               1816  ISRCADEST       BSR     PRINTSTR
+00002AC4  43F9 00003312           1817                  LEA     ISRC,A1
+00002ACA  6100 063C               1818                  BSR     FIRSTOP
+00002ACE  43F9 00003324           1819                  LEA     ADEST,A1
+00002AD4  6100 063C               1820                  BSR     SECONDOP
+00002AD8  6100 0642               1821                  BSR     PRINTCRLF
+00002ADC  4EF8 111E               1822                  JMP     CONTINUE   
+00002AE0                          1823  
+00002AE0                          1824  *abs addr to addr reg                
+00002AE0  6100 0640               1825  AASRCADEST      BSR     PRINTSTR
+00002AE4  6100 05F2               1826                  BSR     PRINTAASRC
+00002AE8  43F9 00003324           1827                  LEA     ADEST,A1
+00002AEE  6100 0622               1828                  BSR     SECONDOP
+00002AF2  6100 0628               1829                  BSR     PRINTCRLF
+00002AF6  4EF8 111E               1830                  JMP     CONTINUE   
+00002AFA                          1831  
+00002AFA                          1832  *pre decr to addr reg
+00002AFA  6100 0626               1833  PRSRCADEST      BSR     PRINTSTR
+00002AFE  43F9 00003315           1834                  LEA     PRSRC,A1
+00002B04  6100 0602               1835                  BSR     FIRSTOP
+00002B08  43F9 00003339           1836                  LEA     CLPAR,A1
+00002B0E  6100 0612               1837                  BSR     PRINTSTR
+00002B12  43F9 00003324           1838                  LEA     ADEST,A1
+00002B18  6100 05F8               1839                  BSR     SECONDOP
+00002B1C  6100 05FE               1840                  BSR     PRINTCRLF
+00002B20  4EF8 111E               1841                  JMP     CONTINUE    
+00002B24                          1842  
+00002B24                          1843  *post incre to addr reg
+00002B24  6100 05FC               1844  POSRCADEST      BSR     PRINTSTR
+00002B28  43F9 0000331A           1845                  LEA     AISRC,A1
+00002B2E  6100 05D8               1846                  BSR     FIRSTOP
+00002B32  43F9 00003332           1847                  LEA     PODEST,A1
+00002B38  6100 05E8               1848                  BSR     PRINTSTR
+00002B3C  43F9 00003324           1849                  LEA     ADEST,A1
+00002B42  6100 05CE               1850                  BSR     SECONDOP
+00002B46  6100 05D4               1851                  BSR     PRINTCRLF
+00002B4A  4EF8 111E               1852                  JMP     CONTINUE      
+00002B4E                          1853  
+00002B4E                          1854  *----Address Register Indirect Dest----------* 
+00002B4E                          1855                 
+00002B4E                          1856  *data reg to addr indirect
+00002B4E  6100 05D2               1857  DSRCAIDEST      BSR     PRINTSTR
+00002B52  43F9 0000330C           1858                  LEA     DSRC,A1
+00002B58  6100 05AE               1859                  BSR     FIRSTOP
+00002B5C  43F9 00003335           1860                  LEA     AIDEST,A1
+00002B62  6100 05AE               1861                  BSR     SECONDOP
+00002B66  43F9 00003339           1862                  LEA     CLPAR,A1
+00002B6C  6100 05B4               1863                  BSR     PRINTSTR
+00002B70  6100 05AA               1864                  BSR     PRINTCRLF
+00002B74  4EF8 111E               1865                  JMP     CONTINUE  
+00002B78                          1866   
+00002B78                          1867  *addr reg to addr indirect
+00002B78  6100 05A8               1868  ASRCAIDEST      BSR     PRINTSTR
+00002B7C  43F9 0000330F           1869                  LEA     ASRC,A1
+00002B82  6100 0584               1870                  BSR     FIRSTOP
+00002B86  43F9 00003335           1871                  LEA     AIDEST,A1
+00002B8C  6100 0584               1872                  BSR     SECONDOP
+00002B90  43F9 00003339           1873                  LEA     CLPAR,A1
+00002B96  6100 058A               1874                  BSR     PRINTSTR
+00002B9A  6100 0580               1875                  BSR     PRINTCRLF
+00002B9E  4EF8 111E               1876                  JMP     CONTINUE   
+00002BA2                          1877  
+00002BA2                          1878  *addr indirect to addr indirect
+00002BA2  6100 057E               1879  AISRCAIDEST     BSR     PRINTSTR
+00002BA6  43F9 0000331A           1880                  LEA     AISRC,A1
+00002BAC  6100 055A               1881                  BSR     FIRSTOP
+00002BB0  43F9 00003339           1882                  LEA     CLPAR,A1
+00002BB6  6100 056A               1883                  BSR     PRINTSTR
+00002BBA  43F9 00003335           1884                  LEA     AIDEST,A1
+00002BC0  6100 0550               1885                  BSR     SECONDOP
+00002BC4  43F9 00003339           1886                  LEA     CLPAR,A1
+00002BCA  6100 0556               1887                  BSR     PRINTSTR
+00002BCE  6100 054C               1888                  BSR     PRINTCRLF
+00002BD2  4EF8 111E               1889                  JMP     CONTINUE     
+00002BD6                          1890  
+00002BD6                          1891  *immediate data to addr indirect
+00002BD6  6100 054A               1892  ISRCAIDEST      BSR     PRINTSTR
+00002BDA  43F9 00003312           1893                  LEA     ISRC,A1
+00002BE0  6100 0526               1894                  BSR     FIRSTOP
+00002BE4  43F9 00003335           1895                  LEA     AIDEST,A1
+00002BEA  6100 0526               1896                  BSR     SECONDOP
+00002BEE  43F9 00003339           1897                  LEA     CLPAR,A1
+00002BF4  6100 052C               1898                  BSR     PRINTSTR
+00002BF8  6100 0522               1899                  BSR     PRINTCRLF
+00002BFC  4EF8 111E               1900                  JMP     CONTINUE   
+00002C00                          1901  
+00002C00                          1902  *abs addr to addr indirect
+00002C00  6100 0520               1903  AASRCAIDEST     BSR     PRINTSTR
+00002C04  6100 04D2               1904                  BSR     PRINTAASRC
+00002C08  43F9 00003335           1905                  LEA     AIDEST,A1
+00002C0E  6100 0502               1906                  BSR     SECONDOP
+00002C12  43F9 00003339           1907                  LEA     CLPAR,A1
+00002C18  6100 0508               1908                  BSR     PRINTSTR
+00002C1C  6100 04FE               1909                  BSR     PRINTCRLF
+00002C20  4EF8 111E               1910                  JMP     CONTINUE   
+00002C24                          1911  
+00002C24                          1912  *pre decr to addr indirect
+00002C24  6100 04FC               1913  PRSRCAIDEST     BSR     PRINTSTR
+00002C28  43F9 00003315           1914                  LEA     PRSRC,A1
+00002C2E  6100 04D8               1915                  BSR     FIRSTOP
+00002C32  43F9 00003339           1916                  LEA     CLPAR,A1
+00002C38  6100 04E8               1917                  BSR     PRINTSTR
+00002C3C  43F9 00003335           1918                  LEA     AIDEST,A1
+00002C42  6100 04CE               1919                  BSR     SECONDOP
+00002C46  43F9 00003339           1920                  LEA     CLPAR,A1
+00002C4C  6100 04D4               1921                  BSR     PRINTSTR
+00002C50  6100 04CA               1922                  BSR     PRINTCRLF
+00002C54  4EF8 111E               1923                  JMP     CONTINUE    
+00002C58                          1924  
+00002C58                          1925  *post incre to addr indirect
+00002C58  6100 04C8               1926  POSRCAIDEST     BSR     PRINTSTR
+00002C5C  43F9 0000331A           1927                  LEA     AISRC,A1
+00002C62  6100 04A4               1928                  BSR     FIRSTOP
+00002C66  43F9 00003332           1929                  LEA     PODEST,A1
+00002C6C  6100 04B4               1930                  BSR     PRINTSTR
+00002C70  43F9 00003335           1931                  LEA     AIDEST,A1
+00002C76  6100 049A               1932                  BSR     SECONDOP
+00002C7A  43F9 00003339           1933                  LEA     CLPAR,A1
+00002C80  6100 04A0               1934                  BSR     PRINTSTR
+00002C84  6100 0496               1935                  BSR     PRINTCRLF
+00002C88  4EF8 111E               1936                  JMP     CONTINUE        
+00002C8C                          1937  
+00002C8C                          1938  *----Immediate data Dest----------* 
+00002C8C                          1939                 
+00002C8C                          1940  *data reg to immediate
+00002C8C  6100 0494               1941  DSRCIDEST       BSR     PRINTSTR
+00002C90  43F9 0000330C           1942                  LEA     DSRC,A1
+00002C96  6100 0470               1943                  BSR     FIRSTOP
+00002C9A  43F9 00003327           1944                  LEA     IDEST,A1
+00002CA0  6100 0470               1945                  BSR     SECONDOP
+00002CA4  6100 0476               1946                  BSR     PRINTCRLF
+00002CA8  4EF8 111E               1947                  JMP     CONTINUE  
+00002CAC                          1948   
+00002CAC                          1949  *addr reg to immediate
+00002CAC  6100 0474               1950  ASRCIDEST       BSR     PRINTSTR
+00002CB0  43F9 0000330F           1951                  LEA     ASRC,A1
+00002CB6  6100 0450               1952                  BSR     FIRSTOP
+00002CBA  43F9 00003327           1953                  LEA     IDEST,A1
+00002CC0  6100 0450               1954                  BSR     SECONDOP
+00002CC4  6100 0456               1955                  BSR     PRINTCRLF
+00002CC8  4EF8 111E               1956                  JMP     CONTINUE   
+00002CCC                          1957  
+00002CCC                          1958  *addr indirect to immediate
+00002CCC  6100 0454               1959  AISRCIDEST      BSR     PRINTSTR
+00002CD0  43F9 0000331A           1960                  LEA     AISRC,A1
+00002CD6  6100 0430               1961                  BSR     FIRSTOP
+00002CDA  43F9 00003339           1962                  LEA     CLPAR,A1
+00002CE0  6100 0440               1963                  BSR     PRINTSTR
+00002CE4  43F9 00003327           1964                  LEA     IDEST,A1
+00002CEA  6100 0426               1965                  BSR     SECONDOP
+00002CEE  6100 042C               1966                  BSR     PRINTCRLF
+00002CF2  4EF8 111E               1967                  JMP     CONTINUE     
+00002CF6                          1968  
+00002CF6                          1969  *immediate data to immediate
+00002CF6  6100 042A               1970  ISRCIDEST       BSR     PRINTSTR
+00002CFA  43F9 00003312           1971                  LEA     ISRC,A1
+00002D00  6100 0406               1972                  BSR     FIRSTOP
+00002D04  43F9 00003327           1973                  LEA     IDEST,A1
+00002D0A  6100 0406               1974                  BSR     SECONDOP
+00002D0E  6100 040C               1975                  BSR     PRINTCRLF
+00002D12  4EF8 111E               1976                  JMP     CONTINUE   
+00002D16                          1977  
+00002D16                          1978  *abs addr to immediate
+00002D16  6100 040A               1979  AASRCIDEST      BSR     PRINTSTR
+00002D1A  6100 03BC               1980                  BSR     PRINTAASRC
+00002D1E  43F9 00003327           1981                  LEA     IDEST,A1
+00002D24  6100 03EC               1982                  BSR     SECONDOP
+00002D28  6100 03F2               1983                  BSR     PRINTCRLF
+00002D2C  4EF8 111E               1984                  JMP     CONTINUE   
+00002D30                          1985  
+00002D30                          1986  *pre decr to immediate
+00002D30  6100 03F0               1987  PRSRCIDEST      BSR     PRINTSTR
+00002D34  43F9 00003315           1988                  LEA     PRSRC,A1
+00002D3A  6100 03CC               1989                  BSR     FIRSTOP
+00002D3E  43F9 00003339           1990                  LEA     CLPAR,A1
+00002D44  6100 03DC               1991                  BSR     PRINTSTR
+00002D48  43F9 00003327           1992                  LEA     IDEST,A1
+00002D4E  6100 03C2               1993                  BSR     SECONDOP
+00002D52  6100 03C8               1994                  BSR     PRINTCRLF
+00002D56  4EF8 111E               1995                  JMP     CONTINUE    
+00002D5A                          1996  
+00002D5A                          1997  *post incre to immediate
+00002D5A  6100 03C6               1998  POSRCIDEST      BSR     PRINTSTR
+00002D5E  43F9 0000331A           1999                  LEA     AISRC,A1
+00002D64  6100 03A2               2000                  BSR     FIRSTOP
+00002D68  43F9 00003332           2001                  LEA     PODEST,A1
+00002D6E  6100 03B2               2002                  BSR     PRINTSTR
+00002D72  43F9 00003335           2003                  LEA     AIDEST,A1
+00002D78  6100 0398               2004                  BSR     SECONDOP
+00002D7C  43F9 00003339           2005                  LEA     CLPAR,A1
+00002D82  6100 039E               2006                  BSR     PRINTSTR
+00002D86  6100 0394               2007                  BSR     PRINTCRLF
+00002D8A  4EF8 111E               2008                  JMP     CONTINUE  
+00002D8E                          2009  
+00002D8E                          2010  *----Absolute Addressing Dest--------* 
+00002D8E                          2011      
+00002D8E                          2012  *data reg to abs addr
+00002D8E  6100 0392               2013  DSRCAADEST      BSR     PRINTSTR
+00002D92  43F9 0000330C           2014                  LEA     DSRC,A1
+00002D98  6100 036E               2015                  BSR     FIRSTOP
+00002D9C  6100 0352               2016                  BSR     PRINTAADST
+00002DA0  6100 037A               2017                  BSR     PRINTCRLF
+00002DA4  4EF8 111E               2018                  JMP     CONTINUE  
+00002DA8                          2019   
+00002DA8                          2020  *addr reg to abs addr              
+00002DA8  6100 0378               2021  ASRCAADEST      BSR     PRINTSTR
+00002DAC  43F9 0000330F           2022                  LEA     ASRC,A1
+00002DB2  6100 0354               2023                  BSR     FIRSTOP
+00002DB6  6100 0338               2024                  BSR     PRINTAADST
+00002DBA  6100 0360               2025                  BSR     PRINTCRLF
+00002DBE  4EF8 111E               2026                  JMP     CONTINUE   
+00002DC2                          2027  
+00002DC2                          2028  *addr indirect to abs addr
+00002DC2  6100 035E               2029  AISRCAADEST     BSR     PRINTSTR
+00002DC6  43F9 0000331A           2030                  LEA     AISRC,A1
+00002DCC  6100 033A               2031                  BSR     FIRSTOP
+00002DD0  43F9 00003339           2032                  LEA     CLPAR,A1
+00002DD6  6100 034A               2033                  BSR     PRINTSTR
+00002DDA  6100 0314               2034                  BSR     PRINTAADST
+00002DDE  6100 033C               2035                  BSR     PRINTCRLF
+00002DE2  4EF8 111E               2036                  JMP     CONTINUE     
+00002DE6                          2037  
+00002DE6                          2038  *immediate data to abs addr
+00002DE6  6100 033A               2039  ISRCAADEST      BSR     PRINTSTR
+00002DEA  43F9 00003312           2040                  LEA     ISRC,A1
+00002DF0  6100 0316               2041                  BSR     FIRSTOP
+00002DF4  6100 02FA               2042                  BSR     PRINTAADST
+00002DF8  6100 0322               2043                  BSR     PRINTCRLF
+00002DFC  4EF8 111E               2044                  JMP     CONTINUE   
+00002E00                          2045  
+00002E00                          2046  *abs addr to abs addr              
+00002E00  6100 0320               2047  AASRCAADEST     BSR     PRINTSTR
+00002E04  6100 02D2               2048                  BSR     PRINTAASRC
+00002E08  6100 02E6               2049                  BSR     PRINTAADST
+00002E0C  6100 030E               2050                  BSR     PRINTCRLF
+00002E10  4EF8 111E               2051                  JMP     CONTINUE   
+00002E14                          2052  
+00002E14                          2053  *pre decr to abs addr
+00002E14  6100 030C               2054  PRSRCAADEST     BSR     PRINTSTR
+00002E18  43F9 00003315           2055                  LEA     PRSRC,A1
+00002E1E  6100 02E8               2056                  BSR     FIRSTOP
+00002E22  43F9 00003339           2057                  LEA     CLPAR,A1
+00002E28  6100 02F8               2058                  BSR     PRINTSTR
+00002E2C  6100 02C2               2059                  BSR     PRINTAADST
+00002E30  6100 02EA               2060                  BSR     PRINTCRLF
+00002E34  4EF8 111E               2061                  JMP     CONTINUE    
+00002E38                          2062  
+00002E38                          2063  *post incre to abs addr
+00002E38  6100 02E8               2064  POSRCAADEST     BSR     PRINTSTR
+00002E3C  43F9 0000331A           2065                  LEA     AISRC,A1
+00002E42  6100 02C4               2066                  BSR     FIRSTOP
+00002E46  43F9 00003332           2067                  LEA     PODEST,A1
+00002E4C  6100 02D4               2068                  BSR     PRINTSTR
+00002E50  6100 029E               2069                  BSR     PRINTAADST
+00002E54  6100 02C6               2070                  BSR     PRINTCRLF
+00002E58  4EF8 111E               2071                  JMP     CONTINUE          
+00002E5C                          2072     
+00002E5C                          2073  *----Address Pre Decrement Dest-------* 
+00002E5C                          2074                 
+00002E5C                          2075  *data reg to pre decr
+00002E5C  6100 02C4               2076  DSRCPRDEST      BSR     PRINTSTR
+00002E60  43F9 0000330C           2077                  LEA     DSRC,A1
+00002E66  6100 02A0               2078                  BSR     FIRSTOP
+00002E6A  43F9 0000332D           2079                  LEA     PRDEST,A1
+00002E70  6100 02A0               2080                  BSR     SECONDOP
+00002E74  43F9 00003339           2081                  LEA     CLPAR,A1
+00002E7A  6100 02A6               2082                  BSR     PRINTSTR
+00002E7E  6100 029C               2083                  BSR     PRINTCRLF
+00002E82  4EF8 111E               2084                  JMP     CONTINUE  
+00002E86                          2085   
+00002E86                          2086  *addr reg to pre decr
+00002E86  6100 029A               2087  ASRCPRDEST      BSR     PRINTSTR
+00002E8A  43F9 0000330F           2088                  LEA     ASRC,A1
+00002E90  6100 0276               2089                  BSR     FIRSTOP
+00002E94  43F9 0000332D           2090                  LEA     PRDEST,A1
+00002E9A  6100 0276               2091                  BSR     SECONDOP
+00002E9E  43F9 00003339           2092                  LEA     CLPAR,A1
+00002EA4  6100 027C               2093                  BSR     PRINTSTR
+00002EA8  6100 0272               2094                  BSR     PRINTCRLF
+00002EAC  4EF8 111E               2095                  JMP     CONTINUE   
+00002EB0                          2096  
+00002EB0                          2097  *addr indirect to pre decr
+00002EB0  6100 0270               2098  AISRCPRDEST     BSR     PRINTSTR
+00002EB4  43F9 0000331A           2099                  LEA     AISRC,A1
+00002EBA  6100 024C               2100                  BSR     FIRSTOP
+00002EBE  43F9 00003339           2101                  LEA     CLPAR,A1
+00002EC4  6100 025C               2102                  BSR     PRINTSTR
+00002EC8  43F9 0000332D           2103                  LEA     PRDEST,A1
+00002ECE  6100 0242               2104                  BSR     SECONDOP
+00002ED2  43F9 00003339           2105                  LEA     CLPAR,A1
+00002ED8  6100 0248               2106                  BSR     PRINTSTR
+00002EDC  6100 023E               2107                  BSR     PRINTCRLF
+00002EE0  4EF8 111E               2108                  JMP     CONTINUE     
+00002EE4                          2109  
+00002EE4                          2110  *immediate data to pre decr
+00002EE4  6100 023C               2111  ISRCPRDEST      BSR     PRINTSTR
+00002EE8  43F9 00003312           2112                  LEA     ISRC,A1
+00002EEE  6100 0218               2113                  BSR     FIRSTOP
+00002EF2  43F9 0000332D           2114                  LEA     PRDEST,A1
+00002EF8  6100 0218               2115                  BSR     SECONDOP
+00002EFC  43F9 00003339           2116                  LEA     CLPAR,A1
+00002F02  6100 021E               2117                  BSR     PRINTSTR
+00002F06  6100 0214               2118                  BSR     PRINTCRLF
+00002F0A  4EF8 111E               2119                  JMP     CONTINUE   
+00002F0E                          2120  
+00002F0E                          2121  *abs addr to pre decr
+00002F0E  6100 0212               2122  AASRCPRDEST     BSR     PRINTSTR
+00002F12  6100 01C4               2123                  BSR     PRINTAASRC
+00002F16  43F9 0000332D           2124                  LEA     PRDEST,A1
+00002F1C  6100 01F4               2125                  BSR     SECONDOP
+00002F20  43F9 00003339           2126                  LEA     CLPAR,A1
+00002F26  6100 01FA               2127                  BSR     PRINTSTR
+00002F2A  6100 01F0               2128                  BSR     PRINTCRLF
+00002F2E  4EF8 111E               2129                  JMP     CONTINUE   
+00002F32                          2130  
+00002F32                          2131  *pre decr to pre decr
+00002F32  6100 01EE               2132  PRSRCPRDEST     BSR     PRINTSTR
+00002F36  43F9 00003315           2133                  LEA     PRSRC,A1
+00002F3C  6100 01CA               2134                  BSR     FIRSTOP
+00002F40  43F9 00003339           2135                  LEA     CLPAR,A1
+00002F46  6100 01DA               2136                  BSR     PRINTSTR
+00002F4A  43F9 0000332D           2137                  LEA     PRDEST,A1
+00002F50  6100 01C0               2138                  BSR     SECONDOP
+00002F54  43F9 00003339           2139                  LEA     CLPAR,A1
+00002F5A  6100 01C6               2140                  BSR     PRINTSTR
+00002F5E  6100 01BC               2141                  BSR     PRINTCRLF
+00002F62  4EF8 111E               2142                  JMP     CONTINUE    
+00002F66                          2143  
+00002F66                          2144  *post incre to pre decr
+00002F66  6100 01BA               2145  POSRCPRDEST     BSR     PRINTSTR
+00002F6A  43F9 0000331A           2146                  LEA     AISRC,A1
+00002F70  6100 0196               2147                  BSR     FIRSTOP
+00002F74  43F9 00003332           2148                  LEA     PODEST,A1
+00002F7A  6100 01A6               2149                  BSR     PRINTSTR
+00002F7E  43F9 0000332D           2150                  LEA     PRDEST,A1
+00002F84  6100 018C               2151                  BSR     SECONDOP
+00002F88  43F9 00003339           2152                  LEA     CLPAR,A1
+00002F8E  6100 0192               2153                  BSR     PRINTSTR
+00002F92  6100 0188               2154                  BSR     PRINTCRLF
+00002F96  4EF8 111E               2155                  JMP     CONTINUE   
+00002F9A                          2156  
+00002F9A                          2157  *----Address Post Increment Dest----------* 
+00002F9A                          2158                 
+00002F9A                          2159  *data reg to post incre
+00002F9A  6100 0186               2160  DSRCPODEST      BSR     PRINTSTR
+00002F9E  43F9 0000330C           2161                  LEA     DSRC,A1
+00002FA4  6100 0162               2162                  BSR     FIRSTOP
+00002FA8  43F9 00003335           2163                  LEA     AIDEST,A1
+00002FAE  6100 0162               2164                  BSR     SECONDOP
+00002FB2  43F9 00003332           2165                  LEA     PODEST,A1
+00002FB8  6100 0168               2166                  BSR     PRINTSTR
+00002FBC  6100 015E               2167                  BSR     PRINTCRLF
+00002FC0  4EF8 111E               2168                  JMP     CONTINUE  
+00002FC4                          2169   
+00002FC4                          2170  *addr reg to post incre
+00002FC4  6100 015C               2171  ASRCPODEST      BSR     PRINTSTR
+00002FC8  43F9 0000330F           2172                  LEA     ASRC,A1
+00002FCE  6100 0138               2173                  BSR     FIRSTOP
+00002FD2  43F9 00003335           2174                  LEA     AIDEST,A1
+00002FD8  6100 0138               2175                  BSR     SECONDOP
+00002FDC  43F9 00003332           2176                  LEA     PODEST,A1
+00002FE2  6100 013E               2177                  BSR     PRINTSTR
+00002FE6  6100 0134               2178                  BSR     PRINTCRLF
+00002FEA  4EF8 111E               2179                  JMP     CONTINUE   
+00002FEE                          2180  
+00002FEE                          2181  *addr indirect to post incre
+00002FEE  6100 0132               2182  AISRCPODEST     BSR     PRINTSTR
+00002FF2  43F9 0000331A           2183                  LEA     AISRC,A1
+00002FF8  6100 010E               2184                  BSR     FIRSTOP
+00002FFC  43F9 00003339           2185                  LEA     CLPAR,A1
+00003002  6100 011E               2186                  BSR     PRINTSTR
+00003006  43F9 00003335           2187                  LEA     AIDEST,A1
+0000300C  6100 0104               2188                  BSR     SECONDOP
+00003010  43F9 00003332           2189                  LEA     PODEST,A1
+00003016  6100 010A               2190                  BSR     PRINTSTR
+0000301A  6100 0100               2191                  BSR     PRINTCRLF
+0000301E  4EF8 111E               2192                  JMP     CONTINUE     
+00003022                          2193  
+00003022                          2194  *immediate data to post incre
+00003022  6100 00FE               2195  ISRCPODEST      BSR     PRINTSTR
+00003026  43F9 00003312           2196                  LEA     ISRC,A1
+0000302C  6100 00DA               2197                  BSR     FIRSTOP
+00003030  43F9 00003335           2198                  LEA     AIDEST,A1
+00003036  6100 00DA               2199                  BSR     SECONDOP
+0000303A  43F9 00003332           2200                  LEA     PODEST,A1
+00003040  6100 00E0               2201                  BSR     PRINTSTR
+00003044  6100 00D6               2202                  BSR     PRINTCRLF
+00003048  4EF8 111E               2203                  JMP     CONTINUE   
+0000304C                          2204  
+0000304C                          2205  *abs addr to post incre
+0000304C  6100 00D4               2206  AASRCPODEST     BSR     PRINTSTR
+00003050  6100 0086               2207                  BSR     PRINTAASRC
+00003054  43F9 00003335           2208                  LEA     AIDEST,A1
+0000305A  6100 00B6               2209                  BSR     SECONDOP
+0000305E  43F9 00003332           2210                  LEA     PODEST,A1
+00003064  6100 00BC               2211                  BSR     PRINTSTR
+00003068  6100 00B2               2212                  BSR     PRINTCRLF
+0000306C  4EF8 111E               2213                  JMP     CONTINUE   
+00003070                          2214  
+00003070                          2215  *pre decr to post incre
+00003070  6100 00B0               2216  PRSRCPODEST     BSR     PRINTSTR
+00003074  43F9 00003315           2217                  LEA     PRSRC,A1
+0000307A  6100 008C               2218                  BSR     FIRSTOP
+0000307E  43F9 00003339           2219                  LEA     CLPAR,A1
+00003084  6100 009C               2220                  BSR     PRINTSTR
+00003088  43F9 00003335           2221                  LEA     AIDEST,A1
+0000308E  6100 0082               2222                  BSR     SECONDOP
+00003092  43F9 00003332           2223                  LEA     PODEST,A1
+00003098  6100 0088               2224                  BSR     PRINTSTR
+0000309C  6100 007E               2225                  BSR     PRINTCRLF
+000030A0  4EF8 111E               2226                  JMP     CONTINUE    
+000030A4                          2227  
+000030A4                          2228  *post incre to post incre
+000030A4  6100 007C               2229  POSRCPODEST     BSR     PRINTSTR
+000030A8  43F9 0000331A           2230                  LEA     AISRC,A1
+000030AE  6100 0058               2231                  BSR     FIRSTOP
+000030B2  43F9 00003332           2232                  LEA     PODEST,A1
+000030B8  6100 0068               2233                  BSR     PRINTSTR
+000030BC  43F9 00003335           2234                  LEA     AIDEST,A1
+000030C2  6100 004E               2235                  BSR     SECONDOP
+000030C6  43F9 00003332           2236                  LEA     PODEST,A1
+000030CC  6100 0054               2237                  BSR     PRINTSTR
+000030D0  6100 004A               2238                  BSR     PRINTCRLF
+000030D4  4EF8 111E               2239                  JMP     CONTINUE   
+000030D8                          2240               
+000030D8                          2241  *----------------I/O Helpers----------------*
+000030D8                          2242  
+000030D8                          2243  *used for w/l addresses (since they can't be displayed in decimal)                
+000030D8  43F9 0000331E           2244  PRINTAASRC      LEA     AASRC,A1
+000030DE  6100 0042               2245                  BSR     PRINTSTR
+000030E2  143C 0010               2246                  MOVE.B  #16,D2
+000030E6  103C 000F               2247                  MOVE.B  #15,D0
+000030EA  2206                    2248                  MOVE.L  D6,D1
+000030EC  4E4F                    2249                  TRAP    #15
+000030EE  4E75                    2250                  RTS                
+000030F0                          2251  
+000030F0                          2252  *used for w/l addresses (since they can't be displayed in decimal) 
+000030F0  43F9 0000332A           2253  PRINTAADST      LEA     AADEST,A1
+000030F6  6100 002A               2254                  BSR     PRINTSTR
+000030FA  143C 0010               2255                  MOVE.B  #16,D2
+000030FE  103C 000F               2256                  MOVE.B  #15,D0
+00003102  2207                    2257                  MOVE.L  D7,D1
+00003104  4E4F                    2258                  TRAP    #15
+00003106  4E75                    2259                  RTS 
+00003108                          2260                  
+00003108                          2261  *prints first op value w/ string
+00003108  2206                    2262  FIRSTOP         MOVE.L  D6,D1
+0000310A  103C 0011               2263                  MOVE.B  #17,D0
+0000310E  4E4F                    2264                  TRAP    #15
+00003110  4E75                    2265                  RTS
+00003112                          2266  
+00003112                          2267  *prints second op value w/ string             
+00003112  2207                    2268  SECONDOP        MOVE.L  D7,D1
+00003114  103C 0011               2269                  MOVE.B  #17,D0
+00003118  4E4F                    2270                  TRAP    #15
+0000311A  4E75                    2271                  RTS
+0000311C                          2272                  
+0000311C                          2273  
+0000311C  43F9 0000317C           2274  PRINTCRLF       LEA     CRLF,A1
+00003122  103C 000E               2275  PRINTSTR        MOVE.B  #14,D0
+00003126  4E4F                    2276                  TRAP    #15
+00003128  4E75                    2277                  RTS
+0000312A                          2278                  
+0000312A  387C 001F               2279  NEXTPAGE        MOVE.W   #31,A4 *next page wooo
+0000312E  43F9 0000327C           2280                  LEA      ENTPAGE,A1
+00003134  61EC                    2281                  BSR      PRINTSTR
+00003136  103C 0005               2282                  MOVE.B   #5,D0 *get a char (in this case, enter key)
+0000313A  4E4F                    2283                  TRAP     #15
+0000313C  6100 0006               2284                  BSR      FLUSH
+00003140  4EF8 111E               2285                  JMP      CONTINUE
+00003144                          2286                               
+00003144  103C 000B               2287  FLUSH           MOVE.B   #11,D0
+00003148  323C FF00               2288                  MOVE.W   #$FF00,D1 *flush print screen
+0000314C  4E4F                    2289                  TRAP     #15
+0000314E  4E75                    2290                  RTS               
+00003150                          2291                 
+00003150  240E                    2292  PRINTZEROES     MOVE.L   A6,D2
+00003152  C483                    2293                  AND.L    D3,D2
+00003154  4E71                    2294                  NOP
+00003156  B4BC 00000000           2295                  CMP.L    #0,D2
+0000315C  6600 001A               2296                  BNE      FINPRINTZEROES
+00003160  E89B                    2297                  ROR.L    #4,D3
+00003162  B6BC F0000000           2298                  CMP.L    #$F0000000,D3
+00003168  6700 000E               2299                  BEQ      FINPRINTZEROES
+0000316C  103C 0006               2300                  MOVE.B   #6,D0
+00003170  123C 0030               2301                  MOVE.B   #$30,D1 *0
+00003174  4E4F                    2302                  TRAP     #15
+00003176  60D8                    2303                  BRA      PRINTZEROES
+00003178                          2304  
+00003178  4E75                    2305  FINPRINTZEROES  RTS
+0000317A                          2306  
+0000317A                          2307  *-------------------------------------------*
+0000317A                          2308  *----------------STRING DATA----------------*
+0000317A                          2309  *-------------------------------------------*
+0000317A                          2310  
+0000317A  =0000000D               2311  CR      EQU     $0D
+0000317A  =0000000A               2312  LF      EQU     $0A
+0000317A                          2313  
+0000317A= 09 00                   2314  TB      DC.B    $09,0
+0000317C= 0D 0A 00                2315  CRLF    DC.B    CR,LF,0
+0000317F                          2316  
+0000317F= 24 00                   2317  DOLLAR  DC.B    '$',0
+00003181= 44 41 54 41 00          2318  DATA    DC.B    'DATA',0
+00003186= 4F 50 43 4F 44 45 00    2319  OPCODE  DC.B    'OPCODE',0
+0000318D= 20 49 4E 56 41 4C ...   2320  INVADDR DC.B    ' INVALID ADDRESSING MODE',0
+000031A6                          2321  
+000031A6= 54 65 61 6D 20 52 ...   2322  WELCOME DC.B    'Team Rocket Lake Presents...',CR,LF,'Our CSS 422 68k Disassembler!',CR,LF,CR,LF,0
+000031E6= 45 6E 74 65 72 20 ...   2323  ENTADDR1 DC.B   'Enter the lower bound long address in hexadecimal (example: 100A,11BC88): ',0
+00003231= 45 6E 74 65 72 20 ...   2324  ENTADDR2 DC.B   'Enter the upper bound long address in hexadecimal (example: 100A,11BC88): ',0
+0000327C= 2D 2D 2D 2D 2D 2D ...   2325  ENTPAGE  DC.B   '----------NEXT PAGE--------->',0
+0000329A= 44 69 73 61 73 73 ...   2326  STARTAGAIN DC.B 'Disassembly complete. Do you wish to continue? Type y or n.',0
+000032D6= 49 6E 70 75 74 20 ...   2327  ERRMSG   DC.B 'Input error. Please follow the format as described.',CR,LF,0
+0000330C                          2328  
+0000330C= 20 44 00                2329  DSRC    DC.B    ' D',0
+0000330F= 20 41 00                2330  ASRC    DC.B    ' A',0
+00003312= 20 23 00                2331  ISRC    DC.B    ' #',0
+00003315= 20 2D 28 41 00          2332  PRSRC   DC.B    ' -(A',0
+0000331A= 20 28 41 00             2333  AISRC   DC.B    ' (A',0
+0000331E= 20 24 00                2334  AASRC   DC.B     ' $',0
+00003321                          2335  
+00003321= 2C 44 00                2336  DDEST   DC.B    ',D',0
+00003324= 2C 41 00                2337  ADEST   DC.B    ',A',0
+00003327= 2C 23 00                2338  IDEST   DC.B    ',#',0
+0000332A= 2C 24 00                2339  AADEST  DC.B    ',$',0
+0000332D= 2C 2D 28 41 00          2340  PRDEST  DC.B    ',-(A',0
+00003332= 29 2B 00                2341  PODEST  DC.B    ')+',0
+00003335= 2C 28 41 00             2342  AIDEST  DC.B    ',(A',0
+00003339= 29 00                   2343  CLPAR   DC.B    ')',0     
+0000333B                          2344  
+0000333B                          2345  *---------------- NOP Variants-------------*
+0000333B= 4E 4F 50 00             2346  SNOP    DC.B    'NOP',0 *snop.
+0000333F                          2347  
+0000333F                          2348  *---------------- MOVE Variants-------------*
+0000333F= 4D 4F 56 45 2E 42 00    2349  SMOVEB DC.B 'MOVE.B',0
+00003346= 4D 4F 56 45 2E 57 00    2350  SMOVEW DC.B 'MOVE.W',0
+0000334D= 4D 4F 56 45 2E 4C 00    2351  SMOVEL DC.B 'MOVE.L',0
+00003354                          2352  
+00003354                          2353  *---------------- MOVEA Variants-------------*
+00003354                          2354  *Data reg
+00003354= 4D 4F 56 45 41 2E ...   2355  SMOVEAW DC.B 'MOVEA.W',0
+0000335C= 4D 4F 56 45 41 2E ...   2356  SMOVEAL DC.B 'MOVEA.L',0
+00003364                          2357  
+00003364                          2358  *--------------MOVEQ VARIANTS---------------*
+00003364                          2359  *only works with data registers and longs *
+00003364= 4D 4F 56 45 51 00       2360  SMOVEQ DC.B 'MOVEQ',0
+0000336A                          2361  
+0000336A                          2362  *--------------ADD VARIANTS---------------*
+0000336A= 41 44 44 2E 42 00       2363  SADDB DC.B 'ADD.B',0
+00003370= 41 44 44 2E 57 00       2364  SADDW DC.B 'ADD.W',0
+00003376= 41 44 44 2E 4C 00       2365  SADDL DC.B 'ADD.L',0
+0000337C                          2366  
+0000337C                          2367  *--------------ADDA VARIANTS---------------*
+0000337C= 41 44 44 41 2E 57 00    2368  SADDAW DC.B 'ADDA.W',0
+00003383= 41 44 44 41 2E 4C 00    2369  SADDAL DC.B 'ADDA.L',0
+0000338A                          2370  
+0000338A                          2371  *--------------ADDQ VARIANTS---------------*
+0000338A                          2372  *only value for immidiate data to a location*
+0000338A= 41 44 44 51 2E 42 00    2373  SADDQB DC.B 'ADDQ.B',0
+00003391= 41 44 44 51 2E 57 00    2374  SADDQW DC.B 'ADDQ.W',0
+00003398= 41 44 44 51 2E 4C 00    2375  SADDQL DC.B 'ADDQ.L',0
+0000339F                          2376  
+0000339F                          2377  *--------------------SUB VARIANTS-----------------------------*
+0000339F= 53 55 42 2E 42 00       2378  SSUBB DC.B 'SUB.B',0
+000033A5= 53 55 42 2E 57 00       2379  SSUBW DC.B 'SUB.W',0
+000033AB= 53 55 42 2E 4C 00       2380  SSUBL DC.B 'SUB.L',0
+000033B1                          2381  
+000033B1                          2382  *---------------- LEA Variants-------------*
+000033B1                          2383  *LEA IS ONLY VALID FOR LONG WORD, THEREFORE DIDN'T SPECIFY IN THE CONSTANT NAME*
+000033B1= 4C 45 41 00             2384  SLEA DC.B 'LEA',0
+000033B5                          2385  
+000033B5                          2386  **---------------- NOT Variants-------------*
+000033B5= 4E 4F 54 2E 42 00       2387  SNOTB DC.B 'NOT.B',0
+000033BB= 4E 4F 54 2E 57 00       2388  SNOTW DC.B 'NOT.W',0
+000033C1= 4E 4F 54 2E 4C 00       2389  SNOTL DC.B 'NOT.L',0
+000033C7                          2390  
+000033C7                          2391  **---------------- AND Variants-------------*
+000033C7= 41 4E 44 2E 42 00       2392  SANDB DC.B 'AND.B',0
+000033CD= 41 4E 44 2E 57 00       2393  SANDW DC.B 'AND.W',0
+000033D3= 41 4E 44 2E 4C 00       2394  SANDL DC.B 'AND.L',0
+000033D9                          2395  
+000033D9                          2396  **---------------- OR Variants--------------*
+000033D9= 4F 52 2E 42 00          2397  SORB DC.B 'OR.B',0
+000033DE= 4F 52 2E 57 00          2398  SORW DC.B 'OR.W',0
+000033E3= 4F 52 2E 4C 00          2399  SORL DC.B 'OR.L',0
+000033E8                          2400  
+000033E8                          2401  *---------------- JSR Variants-------------*
+000033E8                          2402  *NO SIZE* 
+000033E8= 4A 53 52 00             2403  SJSR DC.B 'JSR',0
+000033EC                          2404  
+000033EC                          2405  *---------------- RTS Variants-------------*
+000033EC= 52 54 53 00             2406  SRTS DC.B 'RTS',0
+000033F0                          2407  
+000033F0                          2408  *---------------- Bcc Variants-------------*
+000033F0= 42 47 54 00             2409  SBGT  DC.B 'BGT',0
+000033F4= 42 4C 45 00             2410  SBLE  DC.B 'BLE',0
+000033F8= 42 45 51 00             2411  SBEQ  DC.B 'BEQ',0
+000033FC                          2412  
+000033FC= 42 52 41 00             2413  SBRA  DC.B 'BRA',0
+00003400                          2414  
+00003400                          2415  *---------------- ASL Variants--------------*
+00003400= 41 53 4C 00             2416  SASL  DC.B 'ASL',0
+00003404= 41 53 4C 2E 42 00       2417  SASLB DC.B 'ASL.B',0
+0000340A= 41 53 4C 2E 57 00       2418  SASLW DC.B 'ASL.W',0
+00003410= 41 53 4C 2E 4C 00       2419  SASLL DC.B 'ASL.L',0
+00003416                          2420  
+00003416                          2421  *---------------- ASR Variants--------------*
+00003416= 41 53 52 00             2422  SASR  DC.B 'ASR',0
+0000341A= 41 53 52 2E 42 00       2423  SASRB DC.B 'ASR.B',0
+00003420= 41 53 52 2E 57 00       2424  SASRW DC.B 'ASR.W',0
+00003426= 41 53 52 2E 4C 00       2425  SASRL DC.B 'ASR.L',0
+0000342C                          2426  
+0000342C                          2427  *--------------- LSL Variants--------------*
+0000342C= 4C 53 4C 00             2428  SLSL  DC.B 'LSL',0
+00003430= 4C 53 4C 2E 42 00       2429  SLSLB DC.B 'LSL.B',0
+00003436= 4C 53 4C 2E 57 00       2430  SLSLW DC.B 'LSL.W',0
+0000343C= 4C 53 4C 2E 4C 00       2431  SLSLL DC.B 'LSL.L',0
+00003442                          2432  
+00003442                          2433  *--------------- LSR Variants--------------*
+00003442= 4C 53 52 00             2434  SLSR  DC.B 'LSR',0
+00003446= 4C 53 52 2E 42 00       2435  SLSRB DC.B 'LSR.B',0
+0000344C= 4C 53 52 2E 57 00       2436  SLSRW DC.B 'LSR.W',0
+00003452= 4C 53 52 2E 4C 00       2437  SLSRL DC.B 'LSR.L',0
+00003458                          2438  
+00003458                          2439  *--------------- ROL Variants--------------*
+00003458= 52 4F 4C 00             2440  SROL  DC.B 'ROL',0
+0000345C= 52 4F 4C 2E 42 00       2441  SROLB DC.B 'ROL.B',0
+00003462= 52 4F 4C 2E 57 00       2442  SROLW DC.B 'ROL.W',0
+00003468= 52 4F 4C 2E 4C 00       2443  SROLL DC.B 'ROL.L',0
+0000346E                          2444  
+0000346E                          2445  *--------------- ROR Variants--------------*
+0000346E= 52 4F 52 00             2446  SROR  DC.B 'ROR',0
+00003472= 52 4F 52 2E 42 00       2447  SRORB DC.B 'ROR.B',0
+00003478= 52 4F 52 2E 57 00       2448  SRORW DC.B 'ROR.W',0
+0000347E= 52 4F 52 2E 4C 00       2449  SRORL DC.B 'ROR.L',0
+00003484                          2450  
+00003484                          2451  
+00003484                          2452      END START
+
+No errors detected
+No warnings generated
+
+
+SYMBOL TABLE INFORMATION
+Symbol-name         Value
+-------------------------
+AADEST              332A
+AASRC               331E
+AASRCAADEST         2E00
+AASRCADEST          2AE0
+AASRCAIDEST         2C00
+AASRCDDEST          29E8
+AASRCIDEST          2D16
+AASRCPODEST         304C
+AASRCPRDEST         2F0E
+ADEST               3324
+AIDEST              3335
+AISRC               331A
+AISRCAADEST         2DC2
+AISRCADEST          2A96
+AISRCAIDEST         2BA2
+AISRCDDEST          299E
+AISRCIDEST          2CCC
+AISRCPODEST         2FEE
+AISRCPRDEST         2EB0
+ASCIICHAR1          107A
+ASCIICHAR2          10F2
+ASCIILOOP1          1038
+ASCIILOOP2          10B0
+ASCIINUM1           1074
+ASCIINUM2           10EC
+ASRC                330F
+ASRCAADEST          2DA8
+ASRCADEST           2A76
+ASRCAIDEST          2B78
+ASRCDDEST           297E
+ASRCIDEST           2CAC
+ASRCPODEST          2FC4
+ASRCPRDEST          2E86
+CLPAR               3339
+CONTINUE            111E
+CR                  D
+CRLF                317C
+DATA                3181
+DDEST               3321
+DOLLAR              317F
+DSRC                330C
+DSRCAADEST          2D8E
+DSRCADEST           2A56
+DSRCAIDEST          2B4E
+DSRCDDEST           295E
+DSRCIDEST           2C8C
+DSRCPODEST          2F9A
+DSRCPRDEST          2E5C
+EASRC               28EC
+EASRCAI             28F8
+EASRCD              294C
+EASRCPO             2930
+EASRCPR             2914
+ENTADDR1            31E6
+ENTADDR2            3231
+ENTPAGE             327C
+ERRMSG              32D6
+FINISHADDR2         10F8
+FINPRINTZEROES      3178
+FIRSTOP             3108
+FLUSH               3144
+GETADDR1            100C
+GETADDR2            1080
+IDEST               3327
+IFADDALAAXA         1B88
+IFADDALAIXA         1B70
+IFADDALAXA          1B64
+IFADDALDXA          1B58
+IFADDALIXA          1B7C
+IFADDALPOXA         1BA0
+IFADDALPRXA         1B94
+IFADDAWAAXA         1B34
+IFADDAWAIXA         1B1C
+IFADDAWAXA          1B10
+IFADDAWDXA          1B04
+IFADDAWIXA          1B28
+IFADDAWPOXA         1B4C
+IFADDAWPRXA         1B40
+IFADDBAAXD          19A8
+IFADDBAIXD          1990
+IFADDBDXAA          19D8
+IFADDBDXAI          19CC
+IFADDBDXD           1984
+IFADDBDXPO          19F0
+IFADDBDXPR          19E4
+IFADDBIXD           199C
+IFADDBPOXD          19C0
+IFADDBPRXD          19B4
+IFADDLAAXD          1AB0
+IFADDLAIXD          1A98
+IFADDLAXD           1A8C
+IFADDLDXAA          1AE0
+IFADDLDXAI          1AD4
+IFADDLDXD           1A80
+IFADDLDXPO          1AF8
+IFADDLDXPR          1AEC
+IFADDLIXD           1AA4
+IFADDLPOXD          1AC8
+IFADDLPRXD          1ABC
+IFADDQBIXA          1BB8
+IFADDQBIXAA         1BD0
+IFADDQBIXAI         1BC4
+IFADDQBIXD          1BAC
+IFADDQBIXPO         1BE8
+IFADDQBIXPR         1BDC
+IFADDQLIXA          1C48
+IFADDQLIXAA         1C60
+IFADDQLIXAI         1C54
+IFADDQLIXD          1C3C
+IFADDQLIXPO         1C78
+IFADDQLIXPR         1C6C
+IFADDQWIXA          1C00
+IFADDQWIXAA         1C18
+IFADDQWIXAI         1C0C
+IFADDQWIXD          1BF4
+IFADDQWIXPO         1C30
+IFADDQWIXPR         1C24
+IFADDWAAXD          1A2C
+IFADDWAIXD          1A14
+IFADDWAXD           1A08
+IFADDWDXAA          1A5C
+IFADDWDXAI          1A50
+IFADDWDXD           19FC
+IFADDWDXPO          1A74
+IFADDWDXPR          1A68
+IFADDWIXD           1A20
+IFADDWPOXD          1A44
+IFADDWPRXD          1A38
+IFANDBAAXD          1EF4
+IFANDBAIXD          1EDC
+IFANDBDXAA          1F24
+IFANDBDXAI          1F18
+IFANDBDXD           1ED0
+IFANDBDXPO          1F3C
+IFANDBDXPR          1F30
+IFANDBIXD           1EE8
+IFANDBPOXD          1F0C
+IFANDBPRXD          1F00
+IFANDLAAXD          1FE4
+IFANDLAIXD          1FCC
+IFANDLDXAA          2014
+IFANDLDXAI          2008
+IFANDLDXD           1FC0
+IFANDLDXPO          202C
+IFANDLDXPR          2020
+IFANDLIXD           1FD8
+IFANDLPOXD          1FFC
+IFANDLPRXD          1FF0
+IFANDWAAXD          1F6C
+IFANDWAIXD          1F54
+IFANDWDXAA          1F9C
+IFANDWDXAI          1F90
+IFANDWDXD           1F48
+IFANDWDXPO          1FB4
+IFANDWDXPR          1FA8
+IFANDWIXD           1F60
+IFANDWPOXD          1F84
+IFANDWPRXD          1F78
+IFASLBDXD           223E
+IFASLBEA            2256
+IFASLBEAXAI         2262
+IFASLBEAXPO         227A
+IFASLBEAXPR         226E
+IFASLBIXD           224A
+IFASLDXD            21F6
+IFASLEA             220E
+IFASLEAXAI          221A
+IFASLEAXPO          2232
+IFASLEAXPR          2226
+IFASLIXD            2202
+IFASLLDXD           22CE
+IFASLLEA            22E6
+IFASLLEAXAI         22F2
+IFASLLEAXPO         230A
+IFASLLEAXPR         22FE
+IFASLLIXD           22DA
+IFASLWDXD           2286
+IFASLWEA            229E
+IFASLWEAXAI         22AA
+IFASLWEAXPO         22C2
+IFASLWEAXPR         22B6
+IFASLWIXD           2292
+IFASRBDXD           235E
+IFASRBEA            2376
+IFASRBEAXAI         2382
+IFASRBEAXPO         239A
+IFASRBEAXPR         238E
+IFASRBIXD           236A
+IFASRDXD            2316
+IFASREA             232E
+IFASREAXAI          233A
+IFASREAXPO          2352
+IFASREAXPR          2346
+IFASRIXD            2322
+IFASRLDXD           23EE
+IFASRLEA            2406
+IFASRLEAXAI         2412
+IFASRLEAXPO         242A
+IFASRLEAXPR         241E
+IFASRLIXD           23FA
+IFASRWDXD           23A6
+IFASRWEA            23BE
+IFASRWEAXAI         23CA
+IFASRWEAXPO         23E2
+IFASRWEAXPR         23D6
+IFASRWIXD           23B2
+IFBADDATA           28B6
+IFBEQ               21EA
+IFBGT               21D2
+IFBLE               21DE
+IFBRA               21C6
+IFINVADDRMODE       28CC
+IFJSRAXAI           21AC
+IFJSREA             21A0
+IFLEAAAXAI          1E10
+IFLEAAIXAI          1E04
+IFLSLBDXD           247E
+IFLSLBEA            2496
+IFLSLBEAXAI         24A2
+IFLSLBEAXPO         24BA
+IFLSLBEAXPR         24AE
+IFLSLBIXD           248A
+IFLSLDXD            2436
+IFLSLEA             244E
+IFLSLEAXAI          245A
+IFLSLEAXPO          2472
+IFLSLEAXPR          2466
+IFLSLIXD            2442
+IFLSLLDXD           250E
+IFLSLLEA            2526
+IFLSLLEAXAI         2532
+IFLSLLEAXPO         254A
+IFLSLLEAXPR         253E
+IFLSLLIXD           251A
+IFLSLWDXD           24C6
+IFLSLWEA            24DE
+IFLSLWEAXAI         24EA
+IFLSLWEAXPO         2502
+IFLSLWEAXPR         24F6
+IFLSLWIXD           24D2
+IFLSRBDXD           259E
+IFLSRBEA            25B6
+IFLSRBEAXAI         25C2
+IFLSRBEAXPO         25DA
+IFLSRBEAXPR         25CE
+IFLSRBIXD           25AA
+IFLSRDXD            2556
+IFLSREA             256E
+IFLSREAXAI          257A
+IFLSREAXPO          2592
+IFLSREAXPR          2586
+IFLSRIXD            2562
+IFLSRLDXD           262E
+IFLSRLEA            2646
+IFLSRLEAXAI         2652
+IFLSRLEAXPO         266A
+IFLSRLEAXPR         265E
+IFLSRLIXD           263A
+IFLSRWDXD           25E6
+IFLSRWEA            25FE
+IFLSRWEAXAI         260A
+IFLSRWEAXPO         2622
+IFLSRWEAXPR         2616
+IFLSRWIXD           25F2
+IFMOVEALAAXA        1954
+IFMOVEALAIXA        193C
+IFMOVEALAXA         1930
+IFMOVEALDXA         1924
+IFMOVEALIXA         1948
+IFMOVEALPOXA        196C
+IFMOVEALPRXA        1960
+IFMOVEAWAAXA        1900
+IFMOVEAWAIXA        18E8
+IFMOVEAWAXA         18DC
+IFMOVEAWDXA         18D0
+IFMOVEAWIXA         18F4
+IFMOVEAWPOXA        1918
+IFMOVEAWPRXA        190C
+IFMOVEBAAXAA        14AE
+IFMOVEBAAXAI        145A
+IFMOVEBAAXD         1406
+IFMOVEBAAXPO        1556
+IFMOVEBAAXPR        1502
+IFMOVEBAIXAA        1496
+IFMOVEBAIXAI        1442
+IFMOVEBAIXD         13EE
+IFMOVEBAIXPO        153E
+IFMOVEBAIXPR        14EA
+IFMOVEBAXAA         148A
+IFMOVEBAXAI         1436
+IFMOVEBAXD          13E2
+IFMOVEBAXPO         1532
+IFMOVEBAXPR         14DE
+IFMOVEBDXAA         147E
+IFMOVEBDXAI         142A
+IFMOVEBDXD          13D6
+IFMOVEBDXPO         1526
+IFMOVEBDXPR         14D2
+IFMOVEBIXAA         14A2
+IFMOVEBIXAI         144E
+IFMOVEBIXD          13FA
+IFMOVEBIXPO         154A
+IFMOVEBIXPR         14F6
+IFMOVEBPOXAA        14C6
+IFMOVEBPOXAI        1472
+IFMOVEBPOXD         141E
+IFMOVEBPOXPO        156E
+IFMOVEBPOXPR        151A
+IFMOVEBPRXAA        14BA
+IFMOVEBPRXAI        1466
+IFMOVEBPRXD         1412
+IFMOVEBPRXPO        1562
+IFMOVEBPRXPR        150E
+IFMOVELAAXAA        17F6
+IFMOVELAAXAI        17A2
+IFMOVELAAXD         174E
+IFMOVELAAXPO        189E
+IFMOVELAAXPR        184A
+IFMOVELAIXAA        17DE
+IFMOVELAIXAI        178A
+IFMOVELAIXD         1736
+IFMOVELAIXPO        1886
+IFMOVELAIXPR        1832
+IFMOVELAXAA         17D2
+IFMOVELAXAI         177E
+IFMOVELAXD          172A
+IFMOVELAXPO         187A
+IFMOVELAXPR         1826
+IFMOVELDXAA         17C6
+IFMOVELDXAI         1772
+IFMOVELDXD          171E
+IFMOVELDXPO         186E
+IFMOVELDXPR         181A
+IFMOVELIXAA         17EA
+IFMOVELIXAI         1796
+IFMOVELIXD          1742
+IFMOVELIXPO         1892
+IFMOVELIXPR         183E
+IFMOVELPOXAA        180E
+IFMOVELPOXAI        17BA
+IFMOVELPOXD         1766
+IFMOVELPOXPO        18B6
+IFMOVELPOXPR        1862
+IFMOVELPRXAA        1802
+IFMOVELPRXAI        17AE
+IFMOVELPRXD         175A
+IFMOVELPRXPO        18AA
+IFMOVELPRXPR        1856
+IFMOVEQIXD          1978
+IFMOVEWAAXAA        1652
+IFMOVEWAAXAI        15FE
+IFMOVEWAAXD         15AA
+IFMOVEWAAXPO        16FA
+IFMOVEWAAXPR        16A6
+IFMOVEWAIXAA        163A
+IFMOVEWAIXAI        15E6
+IFMOVEWAIXD         1592
+IFMOVEWAIXPO        16E2
+IFMOVEWAIXPR        168E
+IFMOVEWAXAA         162E
+IFMOVEWAXAI         15DA
+IFMOVEWAXD          1586
+IFMOVEWAXPO         16D6
+IFMOVEWAXPR         1682
+IFMOVEWDXAA         1622
+IFMOVEWDXAI         15CE
+IFMOVEWDXD          157A
+IFMOVEWDXPO         16CA
+IFMOVEWDXPR         1676
+IFMOVEWIXAA         1646
+IFMOVEWIXAI         15F2
+IFMOVEWIXD          159E
+IFMOVEWIXPO         16EE
+IFMOVEWIXPR         169A
+IFMOVEWPOXAA        166A
+IFMOVEWPOXAI        1616
+IFMOVEWPOXD         15C2
+IFMOVEWPOXPO        1712
+IFMOVEWPOXPR        16BE
+IFMOVEWPRXAA        165E
+IFMOVEWPRXAI        160A
+IFMOVEWPRXD         15B6
+IFMOVEWPRXPO        1706
+IFMOVEWPRXPR        16B2
+IFNOP               18C2
+IFNOTBEA            1E1C
+IFNOTBEAXAI         1E34
+IFNOTBEAXD          1E28
+IFNOTBEAXPO         1E4C
+IFNOTBEAXPR         1E40
+IFNOTLEA            1E94
+IFNOTLEAXAI         1EAC
+IFNOTLEAXD          1EA0
+IFNOTLEAXPO         1EC4
+IFNOTLEAXPR         1EB8
+IFNOTWEA            1E58
+IFNOTWEAXAI         1E70
+IFNOTWEAXD          1E64
+IFNOTWEAXPO         1E88
+IFNOTWEAXPR         1E7C
+IFOPCODEAAXA        1262
+IFOPCODEAAXAA       130A
+IFOPCODEAAXAI       12B6
+IFOPCODEAAXD        120E
+IFOPCODEAAXPO       13B2
+IFOPCODEAAXPR       135E
+IFOPCODEAIXA        124A
+IFOPCODEAIXAA       12F2
+IFOPCODEAIXAI       129E
+IFOPCODEAIXD        11F6
+IFOPCODEAIXPO       139A
+IFOPCODEAIXPR       1346
+IFOPCODEAXA         123E
+IFOPCODEAXAA        12E6
+IFOPCODEAXAI        1292
+IFOPCODEAXD         11EA
+IFOPCODEAXPO        138E
+IFOPCODEAXPR        133A
+IFOPCODEDXA         1232
+IFOPCODEDXAA        12DA
+IFOPCODEDXAI        1286
+IFOPCODEDXD         11DE
+IFOPCODEDXPO        1382
+IFOPCODEDXPR        132E
+IFOPCODEEA          11A2
+IFOPCODEEAXAI       11BA
+IFOPCODEEAXD        11AE
+IFOPCODEEAXPO       11D2
+IFOPCODEEAXPR       11C6
+IFOPCODEIXA         1256
+IFOPCODEIXAA        12FE
+IFOPCODEIXAI        12AA
+IFOPCODEIXD         1202
+IFOPCODEIXPO        13A6
+IFOPCODEIXPR        1352
+IFOPCODEPOXA        127A
+IFOPCODEPOXAA       1322
+IFOPCODEPOXAI       12CE
+IFOPCODEPOXD        1226
+IFOPCODEPOXPO       13CA
+IFOPCODEPOXPR       1376
+IFOPCODEPRXA        126E
+IFOPCODEPRXAA       1316
+IFOPCODEPRXAI       12C2
+IFOPCODEPRXD        121A
+IFOPCODEPRXPO       13BE
+IFOPCODEPRXPR       136A
+IFORBAAXD           205C
+IFORBAIXD           2044
+IFORBDXAA           208C
+IFORBDXAI           2080
+IFORBDXD            2038
+IFORBDXPO           20A4
+IFORBDXPR           2098
+IFORBIXD            2050
+IFORBPOXD           2074
+IFORBPRXD           2068
+IFORLAAXD           214C
+IFORLAIXD           2134
+IFORLDXAA           217C
+IFORLDXAI           2170
+IFORLDXD            2128
+IFORLDXPO           2194
+IFORLDXPR           2188
+IFORLIXD            2140
+IFORLPOXD           2164
+IFORLPRXD           2158
+IFORWAAXD           20D4
+IFORWAIXD           20BC
+IFORWDXAA           2104
+IFORWDXAI           20F8
+IFORWDXD            20B0
+IFORWDXPO           211C
+IFORWDXPR           2110
+IFORWIXD            20C8
+IFORWPOXD           20EC
+IFORWPRXD           20E0
+IFROLBDXD           26BE
+IFROLBEA            26D6
+IFROLBEAXAI         26E2
+IFROLBEAXPO         26FA
+IFROLBEAXPR         26EE
+IFROLBIXD           26CA
+IFROLDXD            2676
+IFROLEA             268E
+IFROLEAXAI          269A
+IFROLEAXPO          26B2
+IFROLEAXPR          26A6
+IFROLIXD            2682
+IFROLLDXD           274E
+IFROLLEA            2766
+IFROLLEAXAI         2772
+IFROLLEAXPO         278A
+IFROLLEAXPR         277E
+IFROLLIXD           275A
+IFROLWDXD           2706
+IFROLWEA            271E
+IFROLWEAXAI         272A
+IFROLWEAXPO         2742
+IFROLWEAXPR         2736
+IFROLWIXD           2712
+IFRORBDXD           27DE
+IFRORBEA            27F6
+IFRORBEAXAI         2802
+IFRORBEAXPO         281A
+IFRORBEAXPR         280E
+IFRORBIXD           27EA
+IFRORDXD            2796
+IFROREA             27AE
+IFROREAXAI          27BA
+IFROREAXPO          27D2
+IFROREAXPR          27C6
+IFRORIXD            27A2
+IFRORLDXD           286E
+IFRORLEA            2886
+IFRORLEAXAI         2892
+IFRORLEAXPO         28AA
+IFRORLEAXPR         289E
+IFRORLIXD           287A
+IFRORWDXD           2826
+IFRORWEA            283E
+IFRORWEAXAI         284A
+IFRORWEAXPO         2862
+IFRORWEAXPR         2856
+IFRORWIXD           2832
+IFRTS               21B8
+IFSUBBAAXD          1CA8
+IFSUBBAIXD          1C90
+IFSUBBDXAA          1CD8
+IFSUBBDXAI          1CCC
+IFSUBBDXD           1C84
+IFSUBBDXPO          1CF0
+IFSUBBDXPR          1CE4
+IFSUBBIXD           1C9C
+IFSUBBPOXD          1CC0
+IFSUBBPRXD          1CB4
+IFSUBLAAXD          1DB0
+IFSUBLAIXD          1D98
+IFSUBLAXD           1D8C
+IFSUBLDXAA          1DE0
+IFSUBLDXAI          1DD4
+IFSUBLDXD           1D80
+IFSUBLDXPO          1DF8
+IFSUBLDXPR          1DEC
+IFSUBLIXD           1DA4
+IFSUBLPOXD          1DC8
+IFSUBLPRXD          1DBC
+IFSUBWAAXD          1D2C
+IFSUBWAIXD          1D14
+IFSUBWAXD           1D08
+IFSUBWDXAA          1D5C
+IFSUBWDXAI          1D50
+IFSUBWDXD           1CFC
+IFSUBWDXPO          1D74
+IFSUBWDXPR          1D68
+IFSUBWIXD           1D20
+IFSUBWPOXD          1D44
+IFSUBWPRXD          1D38
+INPUTERROR          1190
+INVADDR             318D
+ISRC                3312
+ISRCAADEST          2DE6
+ISRCADEST           2AC0
+ISRCAIDEST          2BD6
+ISRCDDEST           29C8
+ISRCIDEST           2CF6
+ISRCPODEST          3022
+ISRCPRDEST          2EE4
+LF                  A
+NEXTPAGE            312A
+OPCODE              3186
+PODEST              3332
+POSRCAADEST         2E38
+POSRCADEST          2B24
+POSRCAIDEST         2C58
+POSRCDDEST          2A2C
+POSRCIDEST          2D5A
+POSRCPODEST         30A4
+POSRCPRDEST         2F66
+PRDEST              332D
+PRINTAADST          30F0
+PRINTAASRC          30D8
+PRINTCRLF           311C
+PRINTSTR            3122
+PRINTZEROES         3150
+PRSRC               3315
+PRSRCAADEST         2E14
+PRSRCADEST          2AFA
+PRSRCAIDEST         2C24
+PRSRCDDEST          2A02
+PRSRCIDEST          2D30
+PRSRCPODEST         3070
+PRSRCPRDEST         2F32
+RESTART             115A
+SADDAL              3383
+SADDAW              337C
+SADDB               336A
+SADDL               3376
+SADDQB              338A
+SADDQL              3398
+SADDQW              3391
+SADDW               3370
+SANDB               33C7
+SANDL               33D3
+SANDW               33CD
+SASL                3400
+SASLB               3404
+SASLL               3410
+SASLW               340A
+SASR                3416
+SASRB               341A
+SASRL               3426
+SASRW               3420
+SBEQ                33F8
+SBGT                33F0
+SBLE                33F4
+SBRA                33FC
+SECONDOP            3112
+SJSR                33E8
+SLEA                33B1
+SLSL                342C
+SLSLB               3430
+SLSLL               343C
+SLSLW               3436
+SLSR                3442
+SLSRB               3446
+SLSRL               3452
+SLSRW               344C
+SMOVEAL             335C
+SMOVEAW             3354
+SMOVEB              333F
+SMOVEL              334D
+SMOVEQ              3364
+SMOVEW              3346
+SNOP                333B
+SNOTB               33B5
+SNOTL               33C1
+SNOTW               33BB
+SORB                33D9
+SORL                33E3
+SORW                33DE
+SROL                3458
+SROLB               345C
+SROLL               3468
+SROLW               3462
+SROR                346E
+SRORB               3472
+SRORL               347E
+SRORW               3478
+SRTS                33EC
+SSUBB               339F
+SSUBL               33AB
+SSUBW               33A5
+START               1000
+STARTAGAIN          329A
+TB                  317A
+WELCOME             31A6
